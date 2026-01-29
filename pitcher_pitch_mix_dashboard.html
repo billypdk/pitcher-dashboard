@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLB Pitcher Pitch Mix 2023-2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .info {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .team-filter {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .team-filter:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #764ba2;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .stat-card .label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 13px;
+        }
+        
+        thead {
+            background: #f5f5f5;
+            border-top: 2px solid #667eea;
+            border-bottom: 2px solid #667eea;
+            position: sticky;
+            top: 0;
+        }
+        
+        th {
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        
+        th:hover {
+            background: #e8e8e8;
+        }
+        
+        th.sortable::after {
+            content: ' ⇅';
+            opacity: 0.5;
+        }
+        
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .team {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .team.free-agent {
+            background: #999;
+        }
+        
+        .number {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 800px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚾ MLB Pitcher Pitch Mix</h1>
+        <div class="info">2023-2025 Pitch Mix Percentages • All Years Included</div>
+        
+        <div class="stats" id="statsContainer"></div>
+        
+        <div class="controls">
+            <input type="text" class="search-box" id="searchInput" placeholder="Search by player name...">
+            <select class="team-filter" id="teamFilter">
+                <option value="">All Teams</option>
+            </select>
+            <button class="btn" onclick="resetFilters()">Reset</button>
+        </div>
+        
+        <div class="table-wrapper">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="sortTable('player')">Player Name</th>
+                        <th class="sortable" onclick="sortTable('team')">Team</th>
+                        <th class="sortable" onclick="sortTable('year')">Year</th>
+                        <th class="sortable" onclick="sortTable('pitch_count')">Pitch Count</th>
+                        <th class="sortable" onclick="sortTable('FB')">FB %</th>
+                        <th class="sortable" onclick="sortTable('SL')">SL %</th>
+                        <th class="sortable" onclick="sortTable('CH')">CH %</th>
+                        <th class="sortable" onclick="sortTable('CB')">CB %</th>
+                        <th class="sortable" onclick="sortTable('SNK')">SNK %</th>
+                        <th class="sortable" onclick="sortTable('CUT')">CUT %</th>
+                        <th class="sortable" onclick="sortTable('SPLT')">SPLT %</th>
+                        <th class="sortable" onclick="sortTable('KN')">KN %</th>
+                        <th class="sortable" onclick="sortTable('SWP')">SWP %</th>
+                        <th class="sortable" onclick="sortTable('SLV')">SLV %</th>
+                        <th class="sortable" onclick="sortTable('FRK')">FRK %</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            Data sourced from Baseball Savant (2023-2025) • Pitch Mix Percentages • Updated January 27, 2026
+        </div>
+    </div>
+
+    <script type="text/csv" id="csvData">Player Name,Team,year,pitch_count,FB,SL,CH,CB,SNK,CUT,SPLT,KN,SWP,SLV,FRK
+"Abbott, Andrew",CIN,2025,2677,47.2,,19.6,15.1,,4.3,,,13.8,,
+"Abbott, Andrew",CIN,2024,2333,53.5,0.2,16.3,11.6,,,,,18.3,,
+"Abbott, Andrew",CIN,2023,1897,49.8,,16.4,17.1,0.2,,,,16.5,,
+"Abreu, Albert",Free Agent,2023,1044,5.9,28.1,14.4,,51.6,,,,,,
+"Abreu, Bryan",HOU,2025,1189,50,48.4,0.4,,1.2,,,,,,
+"Abreu, Bryan",HOU,2024,1300,46.3,53.1,0.5,,0.1,,,,,,
+"Abreu, Bryan",HOU,2023,1211,41,58.7,,0.1,0.2,,,,,,
+"Adam, Jason",SD,2025,1087,22.7,35.1,33.4,,,0.3,,,8.5,,
+"Adam, Jason",SD,2024,1109,37.1,19.2,25.8,,0.4,1.4,,,16.1,,
+"Adam, Jason",SD,2023,906,33.4,1.3,35.2,,,,,,30,,
+"Adon, Joan",Free Agent,2023,924,40.6,11.3,15.2,20.5,12.6,,,,,,
+"Akin, Keegan",BAL,2025,1058,51.3,28.7,19.9,,,,,,,,
+"Akin, Keegan",BAL,2024,1241,56,33.2,10.8,,,,,,,,
+"Alcala, Jorge",Free Agent,2025,1058,46.4,15.4,1.9,23.3,13,,,,,,
+"Alcala, Jorge",Free Agent,2024,931,43.8,38.7,9.8,,7.7,,,,,,
+"Alcantara, Sandy",MIA,2025,2891,17.1,15.8,23.2,18,25.9,,,,,,
+"Alcantara, Sandy",MIA,2023,2721,21.6,20,27.3,2.4,28.7,,,,,,
+"Alexander, Jason",HOU,2025,1252,10.1,0.2,32.7,,40,1,,,16,,
+"Alexander, Tyler",TEX,2025,1585,26.1,,16,,18.4,17.1,,,22.4,,
+"Alexander, Tyler",TEX,2024,1668,22.7,0.4,13.7,,12.7,31.8,,,18.7,,
+"Allard, Kolby",Free Agent,2025,1000,38.9,,20,13.2,8.6,19.3,,,,,
+"Allen, Logan",CLE,2025,2709,33.5,,18.5,,13.2,11.4,,,23.3,,
+"Allen, Logan",CLE,2024,1665,37.4,,18.2,,11.1,14.6,,,18.8,,
+"Allen, Logan",CLE,2023,2134,45,2.4,21.3,,0,9,,,22.3,,
+"Alvarado, José",PHI,2024,1052,0.2,,,0.3,59.2,40.3,,,,,
+"Alzolay, Adbert",Free Agent,2023,962,20,46.6,0.5,,20.1,8.4,,,4.4,,
+"Anderson, Chase",Free Agent,2024,1016,15.2,,30.4,4,1.4,33.9,,,15.2,,
+"Anderson, Chase",Free Agent,2023,1447,24.6,0.3,22.9,4.1,13.9,26.3,,,7.8,,
+"Anderson, Grant",MIL,2025,1158,33.2,,4.1,,24.8,,,,37.8,,
+"Anderson, Justin",Free Agent,2024,945,33.1,45.3,,,14,7.6,,,,,
+"Anderson, Tyler",Free Agent,2025,2339,38.1,3.5,34,0.3,3.6,20.5,,,,,
+"Anderson, Tyler",Free Agent,2024,2914,39.6,1.8,37.1,0.1,3.3,18.1,,,,,
+"Anderson, Tyler",Free Agent,2023,2431,37.4,0.8,33.9,0.2,5.6,22.1,,,,,
+"Armstrong, Shawn",CLE,2025,1118,28.9,,,,23.6,24.1,,,23.3,0.1,
+"Armstrong, Shawn",CLE,2024,1109,33.2,,,,27.1,31,,,5.7,3,
+"Armstrong, Shawn",CLE,2023,797,20.7,,,,34.3,37.6,,,,7.4,
+"Arrighetti, Spencer",HOU,2024,2505,40.6,0.1,8.6,19.9,0.4,19.6,,,10.8,,
+"Ashby, Aaron",MIL,2025,1033,2.3,8.1,11.8,26.4,51.3,,,,,,
+"Ashcraft, Braxton",PIT,2025,1102,29.7,31.2,3.3,21.1,14.8,,,,,,
+"Ashcraft, Graham",CIN,2025,1039,,45.9,,,,54.1,,,,,
+"Ashcraft, Graham",CIN,2024,1342,,32,3.7,,15.9,48.4,,,,,
+"Ashcraft, Graham",CIN,2023,2324,0.1,37.3,0,,9.6,52.9,,,,,
+"Assad, Javier",CHC,2024,2538,16.2,1.7,4.6,11.6,35.4,21.6,,,9,,
+"Assad, Javier",CHC,2023,1710,19.6,3,4,5,30.6,27.3,,,10.5,,
+"Avila, Pedro",Free Agent,2024,1419,39,6.8,22,16.1,12.5,,,,3.7,,
+"Avila, Pedro",Free Agent,2023,895,30.4,,25.6,20.1,23,,,,0.9,,
+"Bachar, Lake",MIA,2025,1143,37.2,23.3,,,,,12.2,,27.4,,
+"Baker, Bryan",TB,2025,1102,47.2,25,27.9,,,,,,,,
+"Banda, Anthony",LAD,2025,1065,23.4,49.2,3.8,,23.7,,,,,,
+"Banks, Tanner",PHI,2025,1084,21.2,35.6,6.5,,12.4,,,,24.3,,
+"Banks, Tanner",PHI,2024,1174,30.9,33,12.6,,8.7,,,,14.8,,
+"Banks, Tanner",PHI,2023,1007,35.3,30.4,16.5,,2.9,,,,15,,
+"Barlow, Scott",Free Agent,2025,1274,21.3,19,0.1,16.4,14.7,,,,28.5,,
+"Barlow, Scott",Free Agent,2024,1022,20.9,1.7,,21,12.9,,,,43.4,,
+"Barlow, Scott",Free Agent,2023,1197,21.4,26,,33.6,7.9,,,,11.1,,
+"Barnes, Jacob",Free Agent,2024,1117,47.3,3.5,,,,49.2,,,,,
+"Barria, Jaime",Free Agent,2023,1350,30.2,50.7,14.1,,5,,,,,,
+"Bassitt, Chris",Free Agent,2025,2829,9.4,2.9,2.7,16.1,41.6,16.9,4.5,,5.9,,
+"Bassitt, Chris",Free Agent,2024,2959,4.4,4.4,5.1,13.7,40.8,19.8,4.5,,7.4,,
+"Bassitt, Chris",Free Agent,2023,3139,9.3,4.6,6.5,12.6,39.2,15.4,3.3,,9,,
+"Baumann, Mike",Free Agent,2024,1067,40.6,23.9,1.8,33.5,0.2,,,,,,
+"Baumann, Mike",Free Agent,2023,1071,51.4,20.8,2.4,25.4,,,,,,,
+"Bautista, Félix",BAL,2023,988,,4.8,,,70.4,,24.8,,,,
+"Baz, Shane",BAL,2025,2718,43.9,3,11.4,26.9,,14.7,,,,,
+"Baz, Shane",BAL,2024,1206,47.9,21.3,10.3,20.5,,,,,,,
+"Bazardo, Eduard",SEA,2025,1224,14.1,42.8,,,40.7,0.2,2.1,,,,
+"Beck, Tristan",SF,2025,817,33,21.3,,17.3,,,,,28.4,,
+"Beck, Tristan",SF,2023,1298,36.6,33.1,0.4,7.9,0.1,,,,22,,
+"Bednar, David",NYY,2025,1024,44,,,36.2,,,19.7,,,,
+"Bednar, David",NYY,2024,1023,55.5,,,20.4,,,24,,,,
+"Bednar, David",NYY,2023,1105,57.9,,,25.4,0.1,,16.6,,,,
+"Beeks, Jalen",Free Agent,2025,916,52.4,,37.7,,,9.9,,,,,
+"Beeks, Jalen",Free Agent,2024,1186,55.5,,25.6,1,0.1,17.8,,,,,
+"Bello, Brayan",BOS,2025,2697,14.8,,15,,35.4,16,,,18.8,,
+"Bello, Brayan",BOS,2024,2710,4.7,0.3,26.9,,40.3,,,,27.8,,
+"Bello, Brayan",BOS,2023,2618,20.6,11.8,23.9,,36.3,1.5,,,5.9,,
+"Bellozo, Valente",Free Agent,2025,1322,28.7,,14.4,4.8,,35,1.8,,15.2,,
+"Bellozo, Valente",Free Agent,2024,1094,37.6,,13.9,12.4,,25.1,0.5,,10.4,,
+"Bender, Anthony",MIA,2025,783,1.3,22.3,3.6,,26.8,,,,46,,
+"Bender, Anthony",MIA,2024,954,1.9,1.6,3.8,,45.2,2.2,,,45.4,,
+"Bergert, Ryan",KC,2025,1312,42.5,24.8,7.5,0.6,6.6,,,,18,,
+"Bernardino, Brennan",COL,2025,833,,4.1,12.5,26.3,44.8,12.4,,,,,
+"Bernardino, Brennan",COL,2024,860,,6.7,,35.1,46.6,11.5,,,,,
+"Bernardino, Brennan",COL,2023,865,0.2,,1.4,42.7,55.7,,,,,,
+"Berríos, José",TOR,2025,2584,17.8,,16.8,,33.6,5.9,,,,26,
+"Berríos, José",TOR,2024,2914,18.6,,16,,33.4,3.5,,,,28.6,
+"Berríos, José",TOR,2023,2937,20.3,,18.5,,31.5,0,,,,29.6,
+"Bibee, Tanner",CLE,2025,2970,27.9,,15.2,5.1,15.2,20.9,,,15.8,,
+"Bibee, Tanner",CLE,2024,2851,43.4,,18,6.1,0.4,25.8,,,6.5,,
+"Bibee, Tanner",CLE,2023,2326,46.9,,16.6,9.3,0.1,27,,,,,
+"Bickford, Phil",Free Agent,2023,1229,71,26.9,2,,0.1,,,,,,
+"Bido, Osvaldo",Free Agent,2025,1380,38.4,29.8,10.6,,14.4,6.8,,,,,
+"Bido, Osvaldo",Free Agent,2024,1056,40,21.1,15.2,,9.3,14.4,,,,,
+"Bido, Osvaldo",Free Agent,2023,940,27.8,36.3,9.9,,23.6,2.4,,,,,
+"Bieber, Shane",TOR,2023,1954,35.2,20.8,3.5,13.6,,27,,,,,
+"Bielak, Brandon",Free Agent,2023,1388,30.6,,24.8,11.1,21.6,,,,11.9,,
+"Bird, Jake",NYY,2025,957,0.6,,,22.7,33.6,2.5,,,40.5,,
+"Bird, Jake",NYY,2023,1391,0.2,7.1,0.2,20,59.2,13.2,,,,,
+"Birdsong, Hayden",SF,2025,1194,44.1,24.4,16.8,12.9,,,,,,1.8,
+"Birdsong, Hayden",SF,2024,1388,44.6,18.3,18.4,18.7,,,,,,,
+"Bivens, Spencer",SF,2025,1294,6.3,,15.3,,37.6,27.2,,,8.3,5.3,
+"Blach, Ty",Free Agent,2024,1133,,,24.5,10.9,50.8,13.7,,,,,
+"Blach, Ty",Free Agent,2023,1264,0.4,,22.1,6.4,54.6,16.5,,,,,
+"Blackburn, Paul",NYY,2024,1212,19.5,,18.1,10.2,13.6,22,,,16.6,,
+"Blackburn, Paul",NYY,2023,1875,14.6,,11.2,11.7,24,20.4,,,18.1,,
+"Blalock, Bradley",MIA,2025,1033,46.5,15.7,,12.9,,9.8,15.2,,,,
+"Blanco, Ronel",HOU,2024,2751,38.3,30.2,22.1,9.4,,,,,,,
+"Blanco, Ronel",HOU,2023,905,40.2,48.6,9,2.2,,,,,,,
+"Boyd, Matthew",CHC,2025,2746,47.1,14.9,23.7,11.3,3,,,,,,
+"Boyd, Matthew",CHC,2023,1178,39,28.4,18.7,7.4,6.6,,,,,,
+"Boyle, Joe",TB,2025,934,48.5,35.1,,,,,16.3,,0.1,,
+"Bradford, Cody",TEX,2024,1175,52.3,7,27.3,12.8,,0.7,,,,,
+"Bradford, Cody",TEX,2023,974,54.5,4.4,27.7,,,13.3,,,,,
+"Bradish, Kyle",BAL,2023,2639,22.2,31.2,6.6,17.3,22.7,,,,,,
+"Bradley, Taj",MIN,2025,2327,38.6,,,14.7,8.9,22.6,15.1,,,,
+"Bradley, Taj",MIN,2024,2294,41.7,,,8.9,,22.5,26.9,,,,
+"Bradley, Taj",MIN,2023,1821,44.9,,,16.7,0.1,24.8,13.6,,,,
+"Brash, Matt",SEA,2023,1304,33.7,51,0.1,8.4,3,3.9,,,,,
+"Brasier, Ryan",Free Agent,2023,902,36,35.4,,,15.1,13.5,,,,,
+"Brazobán, Huascar",NYM,2025,1011,12,,38.1,,37.3,12.7,,,,,
+"Brazobán, Huascar",NYM,2024,899,21.7,,28.9,,24.8,24.6,,,,,
+"Brazobán, Huascar",NYM,2023,1012,16.6,,28.4,,22.3,32.7,,,,,
+"Brebbia, John",Free Agent,2024,994,48.2,51.8,,,,,,,,,
+"Brieske, Beau",DET,2024,1152,39.7,17.3,26.5,,16.6,,,,,,
+"Brito, Jhony",SD,2023,1445,16.5,1.7,29,10.4,32.7,,,,9.7,,
+"Brown, Ben",CHC,2025,1759,55.6,,4.5,39.9,,,,,,,
+"Brown, Ben",CHC,2024,849,62.7,,1.6,35.7,,,,,,,
+"Brown, Hunter",HOU,2025,2962,37.4,4.4,12,17.9,22.7,5.5,,,,,
+"Brown, Hunter",HOU,2024,2889,35,5.6,12.5,12.5,17.9,16.4,,,,,
+"Brown, Hunter",HOU,2023,2720,46.2,,4.8,23.8,,23.6,,,1.6,,
+"Bubic, Kris",KC,2025,1795,38.1,13.4,21.1,,6.5,,,,20.9,,
+"Buehler, Walker",Free Agent,2025,2189,25.3,14.9,6.9,12.9,16.4,16.9,,,6.7,,
+"Buehler, Walker",Free Agent,2024,1336,28.9,0.8,5.2,19.2,16.4,20.9,,,8.7,,
+"Bummer, Aaron",ATL,2025,932,12.6,,,35,34.8,,,,17.7,,
+"Bummer, Aaron",ATL,2024,974,10,,1.1,2.3,39.8,5,,,41.8,,
+"Bummer, Aaron",ATL,2023,1099,6.5,,0.5,,44.4,10.6,,,38,,
+"Burke, Brock",CIN,2025,1014,42.5,27.5,22,,8,,,,,,
+"Burke, Brock",CIN,2023,914,64.4,18.8,11.2,,5.6,,,,,,
+"Burke, Sean",CWS,2025,2376,43.1,21.9,6.5,23.7,4.8,,,,,,
+"Burnes, Corbin",ARI,2025,1009,,9,7.2,19.2,9.6,54.9,,,,,
+"Burnes, Corbin",ARI,2024,2996,0.1,12.8,11.1,21.5,7.7,45,,,1.9,,
+"Burnes, Corbin",ARI,2023,3079,,3.9,11.2,17.2,7.7,55.4,,,4.5,,
+"Burrows, Mike",HOU,2025,1537,39.2,19.5,23.7,11.9,5.6,,,,,,
+"Buttó, José",SF,2025,1095,30.9,30,15.2,,17,,,,7,,
+"Buttó, José",SF,2024,1222,31.4,12.9,22.1,,23.1,,,,10.5,,
+"Cabrera, Edward",CHC,2025,2252,13,17.3,25.8,23.6,20.4,,,,,,
+"Cabrera, Edward",CHC,2024,1734,27.7,8.4,32.6,21.9,9.5,,,,,,
+"Cabrera, Edward",CHC,2023,1802,27.4,8,31.4,23.4,9.8,,,,,,
+"Cabrera, Génesis",Free Agent,2024,1030,19.3,,7.7,12,21.7,39.3,,,,,
+"Cabrera, Génesis",Free Agent,2023,946,35.7,,4.1,13.3,14.7,32.1,,,,,
+"Cameron, Noah",KC,2025,2164,26.4,14.3,18.5,19.3,,21.5,,,,,
+"Canning, Griffin",Free Agent,2025,1343,35.1,31.4,23.2,6.5,,3.8,,,,,
+"Canning, Griffin",Free Agent,2024,2869,37.3,24.1,26.7,10.7,1.3,,,,,,
+"Canning, Griffin",Free Agent,2023,2177,34.7,29.9,21.3,13.4,0.7,,,,,,
+"Cannon, Jonathan",CWS,2025,1793,18.1,,21.4,,22,23.5,,,15.1,,
+"Cannon, Jonathan",CWS,2024,2028,12.3,,18.7,,28,19.2,,,21.8,,
+"Cano, Yennier",BAL,2025,986,11.5,20.2,12.5,,45.8,2.8,7.2,,,,
+"Cano, Yennier",BAL,2024,1008,11.6,13,24.6,,50.8,,,,,,
+"Cano, Yennier",BAL,2023,1017,3.3,13.5,27.9,,55.3,,,,,,
+"Cantillo, Joey",CLE,2025,1637,42,8.7,30.5,18.8,,,,,,,
+"Carrasco, Carlos",Free Agent,2024,1693,25.3,24.3,23.2,6.9,17.1,,,,3.2,,
+"Carrasco, Carlos",Free Agent,2023,1587,31.8,18.4,29.8,8.8,10.6,0.4,,,0.3,,
+"Casparius, Ben",LAD,2025,1262,30.4,,,14.4,1.2,21.8,,,32.2,,
+"Castillo, Luis",SEA,2025,2988,46.4,20.4,11.4,,21.9,,,,,,
+"Castillo, Luis",SEA,2024,2859,45.3,22.4,14.3,,18.1,,,,,,
+"Castillo, Luis",SEA,2023,3207,44.3,22.1,15.6,,18,,,,,,
+"Castro, Miguel",Free Agent,2023,1008,3.8,41.7,15.5,,39.1,,,,,,
+"Cease, Dylan",TOR,2025,3044,42.1,41,1.1,8.3,3.9,,,,3.5,,
+"Cease, Dylan",TOR,2024,3188,43.5,43,0.9,7.9,0.1,0.6,,,4.1,,
+"Cease, Dylan",TOR,2023,3262,43.2,38.6,3,15.2,,,,,,,
+"Cecconi, Slade",CLE,2025,2063,43.6,18.6,7.5,16.5,11,2.7,,,0.1,,
+"Cecconi, Slade",CLE,2024,1291,54.9,23.7,12.2,8.9,,0.1,,,0.2,,
+"Chafin, Andrew",Free Agent,2024,967,14.7,45.8,,,39.5,,,,,,
+"Chafin, Andrew",Free Agent,2023,921,20.8,35.1,0.9,,43.2,,,,,,
+"Chapman, Aroldis",BOS,2025,917,39.8,15.2,,,33.9,,11.1,,,,
+"Chapman, Aroldis",BOS,2024,1128,33.4,26.6,,,27.7,,12.2,,,,
+"Chapman, Aroldis",BOS,2023,1008,47.5,29,,,16.5,,7,,,,
+"Chavez, Jesse",Free Agent,2024,1044,,1.6,13.4,7,26.9,51.1,,,,,
+"Chirinos, Yonny",Free Agent,2023,1342,1.4,25.8,,,47.2,,25.6,,,,
+"Chivilli, Angel",COL,2025,1022,45.9,17.5,36.6,,,,,,,,
+"Cisnero, José",Free Agent,2023,986,37.6,19.8,9.8,,20.5,12.3,,,,,
+"Civale, Aaron",Free Agent,2025,1747,15.5,7.7,,18.9,16.8,35,5.8,,0.3,,
+"Civale, Aaron",Free Agent,2024,2699,9.7,1.5,,15.7,24.2,32.2,2,,14.7,,
+"Civale, Aaron",Free Agent,2023,2009,12.4,5.8,,24.4,18.5,37.2,1.7,,0.1,,
+"Clarke, Taylor",ARI,2025,865,21.8,39.8,20.3,,18,,,,,,
+"Clarke, Taylor",ARI,2023,1068,28.9,37,15.4,,0.1,,,,18.6,,
+"Clase, Emmanuel",Free Agent,2024,983,,20.5,,,1.6,77.8,,,,,
+"Clase, Emmanuel",Free Agent,2023,1120,0.1,32,,,0.4,67.5,,,,,
+"Cleavinger, Garrett",TB,2025,874,12.2,38.8,,,37,1.7,,,10.3,,
+"Cleavinger, Garrett",TB,2024,1056,24.9,24.1,,,9.4,24.6,,,17,,
+"Clevinger, Mike",Free Agent,2023,2100,47.3,,12.8,1.6,3,8.2,,,27.1,,
+"Cobb, Alex",Free Agent,2023,2506,0.5,5.1,,16.2,39.4,,38.7,,,,
+"Cole, Gerrit",NYY,2024,1534,45.4,15.1,4,18.7,0.9,15.8,,,,,
+"Cole, Gerrit",NYY,2023,3281,52.9,20.8,7.1,12.1,0,7,,,,,
+"Contreras, Roansy",Free Agent,2024,1075,37.2,25,10.5,9.4,10.4,,,,7.4,,
+"Contreras, Roansy",Free Agent,2023,1141,40.2,43.5,3.9,11.7,,,,,0.8,,
+"Corbin, Patrick",Free Agent,2025,2588,2.7,33.5,9.4,0.6,28.9,25,,,,,
+"Corbin, Patrick",Free Agent,2024,2888,5.7,34.2,3.3,1.8,35.7,19.2,0,,,,
+"Corbin, Patrick",Free Agent,2023,2922,17,35.1,6.4,,41.5,,,,,,
+"Cortes, Nestor",Free Agent,2024,2849,44.4,0.9,9.6,,1.2,28,,,15.8,,
+"Cortes, Nestor",Free Agent,2023,1068,52.4,2,2.8,,0.1,28.8,,,13.9,,
+"Cosgrove, Tom",Free Agent,2023,837,24,,0.4,,23.4,,,,52.2,,
+"Coulombe, Danny",Free Agent,2023,830,8.6,,1.9,10.7,18.1,43,,,17.7,,
+"Crawford, Kutter",BOS,2024,2823,33.7,,,7.2,,32.1,8.6,,18.5,,
+"Crawford, Kutter",BOS,2023,2099,39.2,6.3,,11.9,0,28.2,7.7,,6.7,,
+"Criswell, Cooper",SEA,2024,1756,,1.9,26.1,,29.7,15.4,,,26.8,,
+"Crochet, Garrett",BOS,2025,3151,36.2,,4.3,,15.8,27.8,,,15.9,,
+"Crochet, Garrett",BOS,2024,2395,53.6,,5.9,,2.2,28.5,,,9.7,,
+"Cronin, Declan",Free Agent,2024,1096,7.2,51.5,,,40.6,,,,0.7,,
+"Cruz, Fernando",NYY,2024,1138,32.3,0.4,,,0.2,25.3,41.7,,,,
+"Cruz, Fernando",NYY,2023,1120,35,4.6,,,0.6,23.9,35.9,,,,
+"Cuas, Jose",Free Agent,2023,1176,19.9,19.6,4.1,,49.4,,,,7,,
+"Cueto, Johnny",Free Agent,2023,860,34.5,23.8,19.3,0.3,19.7,2.3,,,,,
+"Curry, Xzavion",Free Agent,2023,1495,48.4,36.1,3.9,11.6,,,,,0.1,,
+"Darvish, Yu",TEX,2025,1158,16,15,0.5,16.6,20.1,12.2,10.6,,9.1,,
+"Darvish, Yu",TEX,2024,1261,18.4,23.3,5,13.7,17.1,4.6,4,,14,,
+"Darvish, Yu",LAD,2023,2218,16.7,17.7,0.1,11.7,18.6,8.9,7.7,,18.6,,
+"Davidson, Tucker",LAD,2023,847,35.2,44.3,,,2,,7.4,,11.1,,
+"Davies, Zach",SD,2023,1498,25.4,1.9,24.8,6.2,29.7,11.3,,,0.8,,
+"De Los Santos, Enyel",SD,2025,1105,48.9,35.9,15.2,,,,,,,,
+"De Los Santos, Enyel",SD,2024,1127,49.3,42.9,7.6,,0.1,,,,,,
+"De Los Santos, Enyel",Free Agent,2023,1048,60.5,30.4,9.1,,,,,,,,
+"deGrom, Jacob",Free Agent,2025,2614,46,37.6,11.3,5.1,,,,,,,
+"DeSclafani, Anthony",HOU,2023,1550,14,44.8,9.8,5.1,26.3,,,,,,
+"Detmers, Reid",HOU,2025,1084,45.3,31.2,0.1,21.1,2.2,,,,,,
+"Detmers, Reid",HOU,2024,1559,42.4,24.5,14.1,14.6,4.4,,,,,,
+"Detmers, Reid",TEX,2023,2599,38.7,30.9,5.4,19.4,4.5,,,,1.1,,
+"Díaz, Alexis",Free Agent,2024,977,57.9,42.1,,,,,,,,,
+"Díaz, Alexis",LAA,2023,1162,48.3,51.5,,,0.3,,,,,,
+"Díaz, Edwin",LAA,2025,1067,52.6,47.3,0.1,,,,,,,,
+"Díaz, Edwin",LAA,2024,912,52.1,47.9,,,,,,,,,
+"Diekman, Jake",Free Agent,2023,996,31.5,,14.7,,32.3,3.6,,,17.9,,
+"Dobbins, Hunter",STL,2025,931,40.5,27.3,,12,1.4,,8.7,,10.1,,
+"Dollander, Chase",COL,2025,1778,48.7,,7.8,21.3,9.9,12.4,,,,,
+"Domínguez, Seranthony",Free Agent,2025,1102,43.2,,,4.9,13.4,,16.6,,21.8,,
+"Domínguez, Seranthony",Free Agent,2024,1064,40.8,21.8,1.6,,17.8,,,,18,,
+"Domínguez, Seranthony",Free Agent,2023,859,38.4,27.7,4,,29.9,,,,,,
+"Doval, Camilo",NYY,2025,1104,,48,,,12.2,39.8,,,,,
+"Doval, Camilo",NYY,2024,1116,0.3,51.1,,,13.8,34.9,,,,,
+"Doval, Camilo",NYY,2023,1138,0.3,36.2,,,29.7,33.8,,,,,
+"Dreyer, Jack",LAD,2025,1146,45.1,46.2,,8.7,,,,,,,
+"Dunning, Dane",Free Agent,2024,1689,2.7,23.4,12.4,4.7,37.8,18.8,,,,,0.1
+"Dunning, Dane",Free Agent,2023,2696,2.4,23.4,15.6,4.7,33.9,20,,,,,
+"Duran, Jhoan",PHI,2025,1073,35,,,19.1,,,40,,5.9,,
+"Duran, Jhoan",PHI,2024,881,40.7,,,27.7,,,31.4,,0.1,,
+"Duran, Jhoan",PHI,2023,1017,44.9,,,27.7,,,27.3,,,,
+"Eflin, Zach",BAL,2025,1127,13.2,,16.4,16.8,18.4,21.7,,,13.5,,
+"Eflin, Zach",BAL,2024,2447,8.4,0.2,6,18.8,28.9,28.2,,,9.4,,
+"Eflin, Zach",BAL,2023,2577,5.8,0.3,5.1,26.3,32.3,26.1,,,4.1,,
+"Eisert, Brandon",CWS,2025,1216,31.6,35.9,29.3,,3.3,,,,,,
+"Elder, Bryce",ATL,2025,2514,12.3,35.1,10.5,,42.1,,,,,,
+"Elder, Bryce",ATL,2023,2849,12.6,35.3,13.8,,38.3,,,,,,
+"Englert, Mason",TB,2023,958,30.3,35.6,26.7,0.7,,,,,,6.7,
+"Eovaldi, Nathan",TEX,2025,1919,22.5,1.2,,19.7,5.1,20.1,31.4,,,,
+"Eovaldi, Nathan",TEX,2024,2622,37.4,2.9,,13.7,,15.2,30.8,,,,
+"Eovaldi, Nathan",TEX,2023,2232,37.2,4.1,,13.5,0,17.6,27.6,,,,
+"Erceg, Lucas",KC,2025,963,30,29.4,16.7,,23.9,,,,,,
+"Erceg, Lucas",KC,2024,947,30.9,27.9,19.9,,21.3,,,,,,
+"Erceg, Lucas",KC,2023,1053,27.3,14.7,22.1,,31.4,4.5,,,,,
+"Estes, Joey",KC,2024,2027,51.3,13.6,11,,3.9,0.7,,,19.5,,
+"Estévez, Carlos",KC,2025,1043,53.5,30.9,15.6,,,,,,,,
+"Estévez, Carlos",KC,2024,821,61.1,28.1,10.4,0.4,,,,,,,
+"Estévez, Carlos",OAK,2023,1127,66.3,26.6,6.2,0.4,0.5,,,,,,
+"Estrada, Jeremiah",SD,2025,1236,56.8,20,,,,,23.2,,,,
+"Estrada, Jeremiah",SD,2024,1003,56.4,23.6,,,0.1,,19.8,,,,
+"Evans, Logan",SEA,2025,1338,11,,11.9,9.8,17.2,26.9,,,23.2,,
+"Faedo, Alex",Free Agent,2024,1007,35.2,39.6,19.9,,5.4,,,,,,
+"Faedo, Alex",Free Agent,2023,1034,48.5,38.1,13.3,,,,,,,,
+"Fairbanks, Pete",MIA,2025,987,51.1,39.8,4.9,,,4.3,,,,,
+"Falter, Bailey",KC,2025,1951,50.8,18,,13.6,9.8,,7.7,,,,
+"Falter, Bailey",KC,2024,2138,48.8,21.7,,15.2,13.9,,0.5,,,,
+"Falter, Bailey",KC,2023,1296,45.3,18.9,4.6,22.5,6.3,,2.4,,,,
+"Farmer, Buck",Free Agent,2024,1170,20.4,34.8,21,,23.8,,,,,,
+"Farmer, Buck",Free Agent,2023,1222,43,33.9,23.1,,0.1,,,,,,
+"Faucher, Calvin",MIA,2025,1054,17.5,,0.1,15.1,12.2,37,,,18.1,,
+"Faucher, Calvin",MIA,2024,987,33.2,,,22,,37.9,,,6.9,,
+"Fedde, Erick",Free Agent,2025,2369,,,11.9,,34.2,28,,,26,,
+"Fedde, Erick",Free Agent,2024,2891,0.7,,16.4,,30.5,32.3,,,20.2,,
+"Feltner, Ryan",COL,2024,2578,36,20.5,14.7,10.1,13.7,,,,5,,
+"Ferguson, Caleb",CIN,2025,1042,31.2,,,,23.6,23.4,,,,21.8,
+"Ferguson, Caleb",CIN,2024,940,43.3,,,,9.8,26.5,,,0.2,20.2,
+"Ferguson, Caleb",CIN,2023,1065,66.5,,,,,30.2,,,2.5,0.8,
+"Ferguson, Tyler",OAK,2025,990,38.4,,4,,14.7,10.9,,,31.9,,
+"Ferguson, Tyler",OAK,2024,819,38.6,,2.2,,22.1,12.9,,,24.2,,
+"Fernandez, Ryan",STL,2024,1191,40.9,48.1,,,0.6,10.4,,,,,
+"Ferrer, Jose A.",SEA,2025,1208,8.8,7.5,21.9,,61.8,,,,,,
+"Festa, David",MIN,2025,882,31.7,26.8,29,,12.5,,,,,,
+"Festa, David",MIN,2024,1099,40.2,31.8,28,,,,,,,,
+"Festa, Matt",CLE,2025,817,39.2,,,,8.1,14.6,,,38.2,,
+"Finnegan, Kyle",DET,2025,846,58.3,4.6,,,,,37.1,,,,
+"Finnegan, Kyle",DET,2024,1067,67.6,5.5,,,,,26.9,,,,
+"Finnegan, Kyle",DET,2023,1106,69.9,5,,,0.1,,25,,,,
+"Fisher, Braydon",TOR,2025,834,22.1,38.3,,36.6,,3,,,,,
+"Flaherty, Jack",DET,2025,2831,46.9,23.6,2.5,25.4,1.6,,,,,,
+"Flaherty, Jack",DET,2024,2646,44.2,29,2.7,21.8,2.3,,,,,,
+"Flaherty, Jack",DET,2023,2634,41.3,25.3,3.2,19.4,2.5,8.3,,,,,
+"Fleming, Josh",Free Agent,2023,759,4.7,,29,22.1,44.1,,,,,,
+"Flexen, Chris",Free Agent,2024,2797,37.1,1.3,15.7,12.2,0,26.2,,,7.5,,
+"Flexen, Chris",Free Agent,2023,1755,41,6.7,16,2.3,1.9,29.2,,,3,,
+"Floro, Dylan",Free Agent,2024,1018,14.2,26.9,9.5,,49.3,,,,,,
+"Floro, Dylan",Free Agent,2023,961,32.6,22.2,11.9,,33.4,,,,,,
+"Fluharty, Mason",TOR,2025,859,,,,,0.1,58.2,,,41.7,,
+"Foley, Jason",SF,2024,905,7.5,31.5,5.6,,55.4,,,,,,
+"Foley, Jason",SF,2023,1047,0.3,17.4,13.4,,69,,,,,,
+"France, J.P.",HOU,2023,2202,42.9,,15.2,13.7,0,19.1,,,9.1,,
+"Francis, Bowden",TOR,2025,1141,56,5.8,,14,1.8,,22.4,,,,
+"Francis, Bowden",TOR,2024,1559,51.3,9.3,,18.2,3,,18.3,,,,
+"Freeland, Kyle",COL,2025,2482,33.4,,5.9,26.1,6,15.6,,,12.9,,
+"Freeland, Kyle",COL,2024,1769,20.4,,11.6,18.8,26.6,22.6,,,,,
+"Freeland, Kyle",COL,2023,2414,18.2,,12.7,17.6,27.9,23.6,,,,,
+"Fried, Max",NYY,2025,3109,12.4,2,11,17.3,17.7,28,,,11.5,,
+"Fried, Max",NYY,2024,2762,32.3,5.9,13.7,20.9,16.6,4.9,,,5.7,,
+"Fried, Max",NYY,2023,1244,32.1,6.4,16.5,23.1,12.9,4.4,,,4.7,,
+"Fujinami, Shintaro",Free Agent,2023,1404,56.5,1.2,,0.1,0.1,16.2,19.8,,6.1,,
+"Fulmer, Carson",Free Agent,2024,1472,22.7,16.3,27,6,24.3,,,,3.7,,
+"Fulmer, Michael",Free Agent,2023,950,28.5,,7.7,0.1,11.2,22,,,30.5,,
+"Gaddis, Hunter",TB,2025,1049,33.1,53.7,13.3,,,,,,,,
+"Gaddis, Hunter",CLE,2024,1075,38.3,44.8,16.8,,,,,,,,
+"Gallegos, Giovanny",CLE,2023,883,50.2,46.3,3.5,,,,,,,,
+"Gallen, Zac",Free Agent,2025,3135,45,7.2,16,23.5,2.5,5.8,,,,,
+"Gallen, Zac",Free Agent,2024,2506,46.3,8.7,14,27.7,0.2,3.1,,,,,
+"Gallen, Zac",Free Agent,2023,3248,49.7,4.5,13.9,22.7,0,9.2,,,,,
+"García, Luis",Free Agent,2025,896,1.9,,,,42.1,,22.3,,33.7,,
+"García, Luis",NYM,2024,898,5.4,12.9,,,53.2,1.9,18.5,,8.1,,
+"García, Luis",NYM,2023,1010,11.1,0.5,,,46.2,,8.1,,34.1,,
+"Garcia, Robert",NYM,2025,972,44.9,26.9,28.3,,,,,,,,
+"Garcia, Robert",TOR,2024,946,52.7,16,31.2,,0.1,,,,,,
+"García, Yimi",TEX,2023,1100,33.6,10.5,7.3,32.8,15.4,,,,0.4,,
+"Garrett, Braxton",TEX,2023,2479,7.4,25.8,8.8,8.4,31.8,17.7,,,,,
+"Garrett, Reed",MIA,2025,979,4.3,,,,24,28.2,22.4,,21.1,,
+"Garrett, Reed",NYM,2024,980,16.8,,,,12.4,23.7,27.1,,19.9,,
+"Gausman, Kevin",NYM,2025,3030,53.7,8.6,,,0.1,,37.6,,,,
+"Gausman, Kevin",TOR,2024,2958,51.9,8.4,,,6.3,,33.4,,,,
+"Gausman, Kevin",TOR,2023,3069,50.7,10.2,,,0.2,,38.3,,0.6,,
+"Germán, Domingo",TOR,2023,1653,27.7,,20.6,40.9,10.8,,,,,,
+"Gibaut, Ian",Free Agent,2023,1214,44.1,,8.1,,,27,,,20.8,,
+"Gibson, Cade",Free Agent,2025,908,9.7,9.5,14.5,28.6,23.5,,,,14.2,,
+"Gibson, Kyle",MIA,2024,2764,13.3,,9.9,8.6,26.4,21.1,,,20.6,,
+"Gibson, Kyle",Free Agent,2023,3038,13.5,,17,8.4,26.1,16.6,,,18.4,,
+"Gil, Luis",Free Agent,2025,970,50.6,25.8,23.6,,,,,,,,
+"Gil, Luis",NYY,2024,2664,48.7,25.9,25.3,,0,,,,,,
+"Gilbert, Logan",NYY,2025,2156,36.7,35.3,,7.5,1,,19.6,,,,
+"Gilbert, Logan",SEA,2024,3042,30.7,32.3,,11.8,1.5,10.5,13.1,,,,
+"Gilbert, Logan",SEA,2023,2922,41.8,29.7,,13.4,0.4,,14.8,,,,
+"Gilbert, Tyler",SEA,2025,839,11.7,,,,31.6,18.6,7.9,,30.3,,
+"Ginkel, Kevin",CWS,2024,1184,52.7,38.4,,,8.9,,,,,,
+"Ginkel, Kevin",ARI,2023,1055,46,43,,,11,,,,,,
+"Ginn, J.T.",ARI,2025,1575,0.2,25.8,9.7,,50.8,13.6,,,,,
+"Giolito, Lucas",OAK,2025,2368,48.4,25.6,22.6,3.5,,,,,,,
+"Giolito, Lucas",Free Agent,2023,3190,41.9,28.2,28.3,1.5,0.1,,,,,,
+"Glasnow, Tyler",Free Agent,2025,1480,36.3,22.1,,21.9,19.7,,,,,,
+"Glasnow, Tyler",LAD,2024,2011,45.2,27.7,,18.6,8.5,,,,,,
+"Glasnow, Tyler",LAD,2023,1894,43.6,34.8,0.3,21.3,,,,,,,
+"Gomber, Austin",LAD,2025,999,34.3,15.9,16.4,24.8,,4,4.5,,,,
+"Gomber, Austin",Free Agent,2024,2622,40.4,16.7,20.5,22.4,0,,,,,,
+"Gomber, Austin",Free Agent,2023,2160,44.7,20.1,18.1,16.8,0.4,,,,,,
+"Gómez, Yoendrys",Free Agent,2025,1099,33.5,1.5,7.6,14.1,19.3,6.8,,,17.2,,
+"Gonsolin, Tony",Free Agent,2023,1664,39.4,18.3,,15.1,0.1,,27.2,,,,
+"Gonzales, Marco",Free Agent,2023,811,28.1,,30.2,24.2,8.8,8.8,,,,,
+"Gordon, Colton",HOU,2025,1451,41,,7.9,10.2,10.8,,,,30.1,,
+"Gordon, Tanner",COL,2025,1244,52.8,25,21.1,1,,,,,,,
+"Gore, MacKenzie",TEX,2025,2818,49.3,11.8,10.3,24,,4.7,,,,,
+"Gore, MacKenzie",TEX,2024,2994,55.4,1.3,9.3,19.4,,14.2,,,0.5,,
+"Gore, MacKenzie",TEX,2023,2462,59.5,18.7,2.9,18.4,,,,,0.5,,
+"Gott, Trevor",Free Agent,2023,977,22.1,,4.1,7.1,27.7,39,,,,,
+"Graterol, Brusdar",LAD,2023,929,10.5,24.3,,,43.4,21.7,,,,,
+"Graveman, Kendall",Free Agent,2023,1114,22.5,26.8,9.1,2.2,39.4,,,,,,
+"Gray, Jon",Free Agent,2024,1620,44.4,43.9,7.1,4.6,,,,,,,
+"Gray, Jon",Free Agent,2023,2393,42.2,33.5,11.6,6.2,0.2,,,,6.4,,
+"Gray, Josiah",WSH,2023,2812,14.7,24.5,1.6,16.1,19.5,18,,,5.5,,
+"Gray, Sonny",BOS,2025,2719,21.7,1.6,8.4,18.4,18,12.6,,,19.2,,
+"Gray, Sonny",BOS,2024,2483,23.8,,6.4,13.9,17.8,17.8,,,20.2,,
+"Gray, Sonny",BOS,2023,2818,26.8,,6.7,16.9,16,13.1,,,20.5,,
+"Green, Chad",Free Agent,2024,840,59.9,39.3,,,0.1,0.7,,,,,
+"Greene, Hunter",CIN,2025,1748,54.2,35,,0.1,,,10.8,,,,
+"Greene, Hunter",CIN,2024,2563,55.2,34.6,,1.8,0,,8.3,,,,
+"Greene, Hunter",CIN,2023,2089,54.6,40.2,4.9,0.1,,,0.3,,,,
+"Greinke, Zack",Free Agent,2023,2219,26.7,20,16.5,14.1,15.6,7,,,,,
+"Grove, Michael",Free Agent,2024,827,1,53.1,,7,22.1,16.8,,,,,
+"Grove, Michael",Free Agent,2023,1146,31.9,39,0.3,17,5,6.7,,,,,
+"Gusto, Ryan",MIA,2025,1760,43.7,1.3,9.7,14.9,10.5,10.9,,,9.1,,
+"Hader, Josh",HOU,2025,847,,41.4,4.4,,54.2,,,,,,
+"Hader, Josh",HOU,2024,1166,0.2,27.4,1,,71.4,,,,,,
+"Hader, Josh",HOU,2023,1042,,23.2,3.4,,73.4,,,,,,
+"Hamilton, Ian",ATL,2023,979,22.2,54.2,,,23.6,,,,,,
+"Hancock, Emerson",SEA,2025,1423,27.1,11.7,20.4,,37.9,,,,3,,
+"Hancock, Emerson",SEA,2024,1014,33.6,10.5,21.1,,28.8,5.9,,,0.1,,
+"Hand, Brad",Free Agent,2023,969,32.4,,,,17.8,,,,49.8,,
+"Hanifee, Brenan",DET,2025,946,12.1,21.1,4.2,,62.6,,,,,,
+"Harris, Hogan",OAK,2025,1125,56.7,1.6,13.2,22.8,,2.7,,,3.1,,
+"Harris, Hogan",OAK,2024,1213,56,,16.5,15.7,0.2,0.2,,,11.5,,
+"Harris, Hogan",OAK,2023,1109,46.9,,20.3,3.3,,18.9,,,10.6,,
+"Harrison, Kyle",BOS,2024,2078,57.6,,19.8,0,0,0.3,,,,22.3,
+"Harvey, Hunter",CHC,2024,906,62.9,4.6,,9.3,,,23.2,,,,
+"Harvey, Hunter",CHC,2023,963,60,13.9,,7.4,,,18.7,,,,
+"Heaney, Andrew",Free Agent,2025,2082,43.6,16.4,17.3,11.4,11.3,,,,,,
+"Heaney, Andrew",Free Agent,2024,2731,51,27.2,16.9,3.6,0.5,0.2,,,,0.6,
+"Heaney, Andrew",Free Agent,2023,2603,57.9,24.9,16.9,0.3,,,,,,,
+"Helsley, Ryan",BAL,2025,979,45.5,47.4,,5.8,,1.3,,,,,
+"Helsley, Ryan",BAL,2024,931,45.4,48.2,,6.3,,,,,,,
+"Hendricks, Kyle",Free Agent,2025,2573,15,,38.4,8.2,38.4,,,,,,
+"Hendricks, Kyle",Free Agent,2024,2135,12.7,,38.7,13.1,35.5,,,,,,
+"Hendricks, Kyle",Free Agent,2023,2108,20.5,,41.1,3.5,34.9,,,,,,
+"Henriquez, Ronny",MIA,2025,1158,29.7,23.3,16.6,,2.1,,,,28.3,,
+"Henry, Cole",WSH,2025,967,50.6,,2.8,,10.1,3.6,,,32.9,,
+"Henry, Tommy",Free Agent,2023,1391,48.9,12.7,19.3,19.1,0.1,,,,,,
+"Hentges, Sam",SF,2023,852,31.2,14.7,,36,18.1,,,,,,
+"Herget, Jimmy",COL,2025,1282,7.9,28.1,5.5,31.1,27.4,,,,,,
+"Hernández, Carlos",Free Agent,2023,1251,55.9,23.7,,9.2,0.1,,11.2,,,,
+"Hernandez, Jose E.",Free Agent,2023,861,33.2,55.9,10.9,,,,,,,,
+"Herrin, Tim",CLE,2024,1011,24.3,27.6,,35.3,12.8,,,,,,
+"Herz, DJ",WSH,2024,1586,54.2,17.9,24.5,3.3,,,,,,,
+"Hicks, Jordan",BOS,2025,1199,9.3,8.1,,,54.5,,6,,22.2,,
+"Hicks, Jordan",BOS,2024,1958,5.4,,,,51.5,,19.1,,24.1,,
+"Hicks, Jordan",BOS,2023,1114,10.8,3.5,,,64.2,,1.6,,19.9,,
+"Hill, Rich",Free Agent,2023,2531,34,1.9,2.2,36.1,4.2,14.7,,,6.9,,
+"Hill, Tim",NYY,2025,899,13.5,4.3,,,82.2,,,,,,
+"Hill, Tim",NYY,2024,982,26.1,5.2,,,68.7,,,,,,
+"Hjelle, Sean",Free Agent,2024,1209,,,,34.4,55.5,10.1,,,,,
+"Hoeing, Bryan",SD,2024,782,4.7,22.9,,,51.8,,20.6,,,,
+"Hoeing, Bryan",SD,2023,1125,9.1,31.8,2.3,,52.5,,4.4,,,,
+"Hoffman, Jeff",TOR,2025,1128,37.4,29.9,,,8.9,,23.8,,,,
+"Hoffman, Jeff",TOR,2024,1001,36.3,40.8,,,11,,12,,,,
+"Hoffman, Jeff",TOR,2023,869,27.4,47.9,,,6.9,,17.8,,,,
+"Holderman, Colin",CLE,2024,869,0.9,,,,25.8,25.7,,,47.6,,
+"Holderman, Colin",CLE,2023,930,0.1,,,,50,20.3,,,29.6,,
+"Holmes, Clay",NYM,2025,2764,5.4,10.7,15.6,,40.9,8.3,,,19,,
+"Holmes, Clay",NYM,2024,1085,0.3,23,,,56.2,,,,20.5,,
+"Holmes, Clay",NYM,2023,1024,0.2,20.9,,,69.3,,,,9.6,,
+"Holmes, Grant",ATL,2025,1964,32.5,35.5,1.2,15.4,0.2,15.1,,,,,
+"Holmes, Grant",ATL,2024,1024,37.3,32.3,1.2,21,,8.2,,,,,
+"Holton, Tyler",DET,2025,1159,11.3,,14.6,3.5,21.8,30.2,,,18.6,,
+"Holton, Tyler",DET,2024,1339,15.1,,18.9,1.5,21.8,27.3,,,15.5,,
+"Holton, Tyler",DET,2023,1195,27.9,,22.5,3.6,12.3,19.4,,,14.2,,
+"Honeywell, Brent",Free Agent,2023,943,45.3,0.5,26.6,,2.2,,,,17.5,,
+"Horton, Cade",CHC,2025,1788,50.3,0.1,12.8,9.7,5.5,,,,21.6,,
+"Houck, Tanner",BOS,2024,2735,0.1,,,,32.1,1.5,24.9,,41.4,,
+"Houck, Tanner",BOS,2023,1740,10.2,37.2,,,29.3,11,11.4,,0.9,,
+"Houser, Adrian",SF,2025,1892,11.7,15.4,15.3,11.7,45.9,,,,,,
+"Houser, Adrian",SF,2024,1131,16.8,17.3,12.7,8.7,44.5,,,,,,
+"Houser, Adrian",SF,2023,1856,23.9,16.6,4,8.5,47,,,,,,
+"Hudson, Bryan",CWS,2024,927,52.2,,,,,24.5,,,23.3,,
+"Hudson, Dakota",Free Agent,2024,1512,15.6,24.3,10.1,17,32.6,0.5,,,,,
+"Hudson, Dakota",Free Agent,2023,1317,22.3,32.4,2.4,5.2,37.6,,,,,,
+"Hudson, Daniel",Free Agent,2024,999,50.3,40.9,3.7,,5.1,,,,,,
+"Hurter, Brant",DET,2025,1052,5.2,,10.6,,52.6,,,,31.6,,
+"Iglesias, Raisel",ATL,2025,964,40.4,9.9,28.1,,21.7,,,,,,
+"Iglesias, Raisel",ATL,2024,928,30.2,20.7,30.7,,18.4,,,,,,
+"Iglesias, Raisel",ATL,2023,870,34.7,15.4,35.3,,14.6,,,,,,
+"Imanaga, Shota",CHC,2025,2176,48.7,0.4,,1.6,1.3,,31.4,,16.6,,
+"Imanaga, Shota",CHC,2024,2590,51.9,,3.8,3.3,2.2,0.5,30.8,,7.6,,
+"Irvin, Cole",Free Agent,2024,1767,27.1,4.1,13.4,25.2,19.2,10.9,,,,,
+"Irvin, Cole",Free Agent,2023,1273,25.8,,21.1,14.3,22.9,15.9,,,,,
+"Irvin, Jake",WSH,2025,2945,32,4.3,7.7,29.6,22.2,4.2,,,,,
+"Irvin, Jake",WSH,2024,3046,37.7,0.3,3.4,31.3,20.7,6.6,,,,,
+"Irvin, Jake",WSH,2023,2147,36.1,,5.2,30.6,28.2,,,,,,
+"Jackson, Andre",Free Agent,2023,1001,44.6,17,32,6.5,,,,,,,
+"Jackson, Luke",Free Agent,2025,782,34.1,49.5,0.1,15.5,,0.8,,,,,
+"Jackson, Luke",Free Agent,2024,917,31.6,52,,15.4,,1,,,,,
+"Jansen, Kenley",DET,2025,869,,6.1,,,9.2,81.4,,,3.3,,
+"Jansen, Kenley",DET,2024,801,,5.9,,,8.1,84.1,,,1.9,,
+"Jarvis, Bryce",Free Agent,2024,1006,34.6,24,13.6,0.7,14.7,12.4,,,,,
+"Javier, Cristian",HOU,2023,2882,58.4,0.1,4.1,7.5,,,,,29.9,,
+"Jax, Griffin",TB,2025,1093,17.8,,22.3,0.5,11.6,4,,,43.7,,
+"Jax, Griffin",TB,2024,1068,30.4,,16.7,6.2,9.3,,,,37.5,,
+"Jax, Griffin",TB,2023,1047,22.5,,8.9,0.1,12.9,2.9,,,52.7,,
+"Jiménez, Joe",ATL,2024,1089,46.2,49.6,4.2,,,,,,,,
+"Jiménez, Joe",ATL,2023,936,62.2,30.7,7.1,,,,,,,,
+"Johnson, Pierce",CIN,2025,968,23,,,72.1,,4.9,,,,,
+"Johnson, Pierce",CIN,2024,916,24.2,,,71.6,,4.1,,,,,
+"Johnson, Pierce",CIN,2023,1084,35.2,8,,56.7,,,,,,,
+"Jones, Jared",PIT,2024,1912,49.2,34.9,6.5,9.3,0.1,,,,,,
+"Junis, Jakob",TEX,2025,1032,8.6,44.5,20,,26.9,,,,,,
+"Junis, Jakob",TEX,2024,943,10,45.2,8.7,,35.9,0.2,,,,,
+"Junis, Jakob",TEX,2023,1389,1.4,62.5,9.9,,26.2,,,,,,
+"Junk, Janson",MIA,2025,1622,37.7,27.6,7.8,11.7,,,,,15.2,,
+"Kahnle, Tommy",Free Agent,2025,1035,14,0.4,85.6,,,,,,,,
+"Kaprielian, James",Free Agent,2023,1091,41.3,30.3,8,6.1,14.1,0.2,,,,,
+"Keller, Brad",PHI,2025,1113,42.2,17.3,11.7,,14.4,,,,14.5,,
+"Keller, Mitch",PIT,2025,2870,34.8,14,6.9,7.3,17.9,0.1,,,19.1,,
+"Keller, Mitch",PIT,2024,2851,29.5,9.5,1,9.6,22.6,12.3,,,15.5,,
+"Keller, Mitch",PIT,2023,3119,26,,2.8,8,22.8,24.3,,,16.1,,
+"Kelly, Kevin",TB,2024,1033,2.2,,,,61.5,8.4,,,27.9,,
+"Kelly, Kevin",TB,2023,1066,1.4,,,,47.8,9.8,,,40.9,,
+"Kelly, Merrill",ARI,2025,2833,22.7,7,26.6,9.7,13.5,20.6,,,,,
+"Kelly, Merrill",ARI,2024,1142,20.4,11.8,20.9,7.8,13.8,25.2,,,,,
+"Kelly, Merrill",ARI,2023,2803,29.8,5.5,23.1,11,12.2,18.4,,,,,
+"Kelly, Zack",BOS,2024,957,29.9,,20.9,,,21.9,,,27.2,,
+"Kerkering, Orion",PHI,2025,1073,32.9,,,,19.1,,,,48,,
+"Kerkering, Orion",PHI,2024,1087,29.2,,,,15.2,,,,55.7,,
+"Kershaw, Clayton",Free Agent,2025,1770,34.4,41.3,,17.9,0.7,,5.5,,,,
+"Kershaw, Clayton",Free Agent,2023,2026,36.8,43.4,1.6,17.5,0.2,,0.3,,,,
+"Kikuchi, Yusei",LAA,2025,3094,34.9,36.2,12.1,15.4,1.2,,,,0.2,,
+"Kikuchi, Yusei",LAA,2024,2923,47,24,11.1,17.9,,,,,,,
+"Kikuchi, Yusei",LAA,2023,2818,45.2,26.3,9.1,18.9,0.4,,,,0.1,,
+"Kimbrel, Craig",Free Agent,2024,963,65.7,,0.5,28.9,,,,,4.9,,
+"Kimbrel, Craig",Free Agent,2023,1122,67.2,,,31.8,,,,,1,,
+"King, Bryan",HOU,2025,1046,62.6,,1.4,0.3,5.4,,,,30.2,,
+"King, John",Free Agent,2024,857,1.4,12,27.7,,58.9,,,,,,
+"King, Michael",SD,2025,1219,24.4,5.7,21.4,,29.5,,,,18.9,,
+"King, Michael",SD,2024,2895,24.2,5.6,24.6,,27.8,,,,17.8,,
+"King, Michael",SD,2023,1681,23.3,,14.5,,32.9,,,,29.3,,
+"Kinley, Tyler",ATL,2025,1225,22.9,64.3,0.9,11.9,,,,,,,
+"Kinley, Tyler",ATL,2024,1185,33.2,62.9,3.4,,0.6,,,,,,
+"Kirby, George",SEA,2025,2086,28.8,28.1,2.2,11.4,26.8,,2.7,,,,
+"Kirby, George",SEA,2024,2967,33.9,23.7,0,8.2,23.7,0.4,10.1,0,,,
+"Kirby, George",SEA,2023,2825,39.8,19.7,1.8,11.5,21.2,,6.1,0.1,,,
+"Kittredge, Andrew",BAL,2025,768,10.5,52.9,,,35.7,,0.9,,,,
+"Kittredge, Andrew",BAL,2024,1029,12.6,49.4,0.1,,37.3,0.6,,,,,
+"Kluber, Corey",Free Agent,2023,990,2,,15.9,28.2,26.6,27.4,,,,,
+"Knack, Landon",LAD,2024,1149,46.3,22.4,14.5,16.2,,,,,0.6,,
+"Kochanowicz, Jack",LAA,2025,1859,18.7,14.8,14,,47,,,,5.4,,
+"Kochanowicz, Jack",LAA,2024,859,6.1,14.1,2.9,,72.6,,,,4.3,,
+"Koenig, Jared",MIL,2025,1043,1,,9.1,15.5,56.7,17.7,,,,,
+"Koenig, Jared",MIL,2024,1017,1.2,,3.9,13.1,56.6,25.2,,,,,
+"Kolek, Stephen",KC,2025,1689,25.6,16.6,11.6,0.1,24.1,15.2,,,6.8,,
+"Kopech, Michael",Free Agent,2024,1143,78.5,11,,,,10.5,,,,,
+"Kopech, Michael",Free Agent,2023,2430,61.6,27.7,6.8,3.9,,0,,,,,
+"Kremer, Dean",BAL,2025,2753,26.5,0.1,,12.8,19.4,20.2,21.1,,,,
+"Kremer, Dean",BAL,2024,2171,32.2,,,11.4,14.8,23,18.5,,,,
+"Kremer, Dean",BAL,2023,2925,36.6,,12.1,8.9,15.1,23.8,0.1,,3.3,,
+"Kuhl, Chad",Free Agent,2024,980,10,35.6,12.6,,22.2,9.3,,,10.3,,
+"Lambert, Peter",Free Agent,2024,1039,38.4,18.8,25,3.9,2.4,1,,,,10.5,
+"Lambert, Peter",Free Agent,2023,1450,44.6,21.2,20,3.2,,,,,11.1,,
+"Lange, Alex",MIN,2023,1146,4.6,,10.1,58.6,26.7,,,,,,
+"Latz, Jacob",MIN,2025,1388,49.4,20.9,23.3,6.4,,,,,,,
+"Lauer, Eric",MIN,2025,1682,46.5,10.6,8,14.4,0.1,20.5,,,,,
+"Law, Derek",ATL,2024,1368,13.5,30.3,5.1,3.6,9.9,37.6,,,,,
+"Law, Derek",ATL,2023,959,19.4,17.7,4.8,10.4,11.7,36,,,,,
+"Lawrence, Justin",Free Agent,2024,1081,0.7,,,,58.2,,,,41.1,,
+"Lawrence, Justin",Free Agent,2023,1183,,,,,51.3,,,,48.7,,
+"Leahy, Kyle",KC,2025,1350,30.4,20.9,9.6,18,7.3,,,,13.9,,
+"Leasure, Jordan",TEX,2025,1130,53.5,42.5,,,1.2,,2.7,,,,
+"Leclerc, José",TOR,2024,1204,34.8,31.9,10.2,0.4,7.1,15.6,,,,,
+"Leclerc, José",Free Agent,2023,977,35.9,31.6,13.3,,3.2,16,,,,,
+"Lee, Dylan",Free Agent,2025,1102,31.2,55.5,13.2,,,,,,,,
+"Lee, Dylan",PIT,2024,859,33.1,54.8,12.1,,,,,,,,
+"Leiter Jr., Mark",PIT,2024,1015,1.5,,0.2,16.9,28.6,7.6,36.1,,9.2,,
+"Leiter Jr., Mark",STL,2023,1056,8.6,,,9.1,27.7,20.6,34,,,,
+"Leiter, Jack",CWS,2025,2584,38.8,23.3,16.5,9.4,11.9,,,,,,
+"Leone, Dominic",Free Agent,2023,886,37.5,29.9,,,1.1,31.5,,,,,
+"Liberatore, Matthew",Free Agent,2025,2388,28.2,20.5,12.2,15.8,11.8,11.6,,,,,
+"Liberatore, Matthew",ATL,2024,1358,28,27.5,4.6,6.5,20.6,12.9,,,,,
+"Liberatore, Matthew",ATL,2023,1059,36.7,12.7,8.1,22.4,19.9,0.1,,,,,
+"Littell, Zack",OAK,2025,2788,23.8,27.5,,,16,,27.3,,5.4,,
+"Littell, Zack",OAK,2024,2486,22.3,34.8,,,14.6,,23.2,,5.1,,
+"Littell, Zack",TEX,2023,1330,31.1,32.1,,,10.2,,19.2,,7.4,,
+"Little, Brendon",Free Agent,2025,1240,0.6,,,46,45.6,7.8,,,,,
+"Lively, Ben",STL,2024,2406,30.6,4.6,9.1,8.6,29.8,0.1,,,17.2,,
+"Lively, Ben",STL,2023,1383,32.5,1.2,10.2,6.6,21.5,4.8,,,23.1,,
+"Lodolo, Nick",STL,2025,2478,27.8,,21.7,28.7,21.8,,,,,,
+"Lodolo, Nick",Free Agent,2024,1864,27.7,,16.4,27.3,28.6,,,,,,
+"Lopez, Jacob",Free Agent,2025,1666,35.2,30.6,13.4,,6.2,14.6,,,,,
+"López, Jorge",Free Agent,2024,802,19.8,19,11.8,13.1,36.3,,,,,,
+"López, Jorge",TOR,2023,966,15.9,16.3,11.6,21.8,34.4,,,,,,
+"López, Pablo",Free Agent,2025,1259,41.2,,21.2,9.9,6.5,,,,21.2,,
+"López, Pablo",Free Agent,2024,2986,40.4,,20.1,9.9,7.7,,,,21.9,,
+"López, Pablo",CIN,2023,3024,34.5,,21.1,12.4,10.6,,,,21.5,,
+"López, Reynaldo",CIN,2024,2110,55.2,29.4,3.9,11.6,,,,,,,
+"López, Reynaldo",OAK,2023,1205,63.9,29.4,5.4,0.9,0.4,,,,,,
+"Lord, Brad",WSH,2025,2128,48.5,20.2,13.1,,18.1,,,,,0.1,
+"Lorenzen, Michael",COL,2025,2318,22,12.3,17.3,11.3,18.1,10.9,,,8.2,,
+"Lorenzen, Michael",COL,2024,2092,27,8.7,18.8,7.9,21.3,10,,,6.2,,
+"Lorenzen, Michael",COL,2023,2367,34.5,22.7,21.6,1.1,12.2,1.5,,,6.4,,
+"Lugo, Seth",KC,2025,2380,21.2,5.5,9.5,23,14.7,14,0.6,,2,9.5,
+"Lugo, Seth",KC,2024,3112,24,9.3,6.7,16.1,18.5,8.5,2.8,,3.6,10.5,
+"Lugo, Seth",KC,2023,2377,31.7,8.6,5.6,28.7,19.9,0.2,0.3,,2.2,2.9,
+"Luzardo, Jesús",PHI,2025,3013,33.3,7.7,17.3,,10.8,,,,31,,
+"Luzardo, Jesús",PHI,2024,1083,35.6,29.4,23.3,,11.7,,,,,,
+"Luzardo, Jesús",PHI,2023,2988,41.3,28.9,21,,8.5,0.4,,,,,
+"Lyles, Jordan",Free Agent,2023,2817,30.3,,10.9,13.1,13.4,7.6,,,24.7,,
+"Lynch IV, Daniel",KC,2025,1088,22.7,29.2,19.2,9.8,19,,,,,,
+"Lynch IV, Daniel",KC,2023,808,42.5,18.7,28,8.5,2.4,,,,,,
+"Lynn, Lance",Free Agent,2024,2039,47.3,,6.3,6.2,16.7,22.3,,,1.3,,
+"Lynn, Lance",Free Agent,2023,3167,43.7,,6.9,14,12.7,22.7,,,,,
+"Machado, Andrés",Free Agent,2023,774,30.5,13.2,27.5,,28.8,,,,,,
+"Maeda, Kenta",Free Agent,2024,1958,22.5,22.7,,1.6,7.2,1.7,31.1,,13.3,,
+"Maeda, Kenta",Free Agent,2023,1700,27,22.1,,3.6,6.8,,31.9,,8.5,,
+"Mahle, Tyler",Free Agent,2025,1381,49.5,10,,,,12.7,27.7,,,,
+"Manaea, Sean",SF,2025,1095,60.1,,5.6,,0.5,,,,33.9,,
+"Manaea, Sean",NYM,2024,2996,31,6.3,11.7,,25.1,7,,,18.9,,
+"Manaea, Sean",NYM,2023,2052,13.9,13.9,17,,43,0,,,12,,
+"Manning, Matt",NYM,2023,1182,47.6,,3.6,17.3,,,,,31.6,,
+"Manoah, Alek",Free Agent,2023,1689,29,30,12.9,,28.1,,,,,,
+"Mantiply, Joe",LAA,2024,867,4.6,,26.4,26.5,42.4,,,,,,
+"Márquez, Germán",Free Agent,2025,2085,35.3,10.8,2.4,31.6,19.8,,,,,,
+"Marsh, Alec",KC,2024,2161,37,17.9,10,16.4,13.8,,,,4.9,,
+"Marsh, Alec",KC,2023,1342,37.3,9.8,14.9,14.9,7.2,,,,15.9,,
+"Martin, Chris",TEX,2023,722,34.3,1.4,,,15.1,34.5,10.7,,4,,
+"Martin, Davis",CWS,2025,2309,32.7,4.3,24.2,4.8,10.7,23.1,,,,,
+"Martin, Davis",CWS,2024,892,28.5,26.8,19.7,7.6,,17.4,,,,,
+"Martinez, Adrián",Free Agent,2023,943,58,17.4,23.4,,1.2,,,,,,
+"Martinez, Justin",ARI,2024,1177,11.8,21.7,,,44.8,,21.8,,,,
+"Martinez, Nick",Free Agent,2025,2578,20.4,10.2,19.8,11,17.5,21.1,,,,,
+"Martinez, Nick",Free Agent,2024,2125,22.5,6.1,21.6,11.9,17.3,20.5,,,,,
+"Martinez, Nick",Free Agent,2023,1751,13.5,0.2,28.8,19.1,21.9,16.3,,,,,
+"Martinez, Seth",Free Agent,2024,838,32.6,,14.6,,21,,,,31.9,,
+"Maton, Phil",CHC,2025,1008,,,,38.2,12.1,36,,,13.7,,
+"Maton, Phil",CHC,2024,1078,,4,,28.8,9.3,35.5,,,22.4,,
+"Maton, Phil",CHC,2023,1040,,,,40.4,4.1,32.1,,,23.4,,
+"Matsui, Yuki",SD,2025,1063,39.5,15.9,,0.2,1.5,,32.2,,10.7,,
+"Matsui, Yuki",SD,2024,1049,41,27.1,,1,0.1,,24.5,,6.4,,
+"Matthews, Zebby",MIN,2025,1353,41.1,25.1,10.6,5.8,4.4,13,,,,,
+"Matz, Steven",TB,2025,1160,,1.6,18.2,21.8,58.4,,,,,,
+"Matz, Steven",TB,2023,1866,,1.8,27.4,14.8,56.1,,,,,,
+"May, Dustin",STL,2025,2169,16.6,,0.8,,33.6,9.7,,,39.3,,
+"Mayza, Tim",Free Agent,2023,809,,23.5,,,76.5,,,,,,
+"McArthur, James",KC,2024,904,9.1,21.6,,33.7,35.7,,,,,,
+"McClanahan, Shane",TB,2023,1821,41.8,15.3,25.8,17,0.1,,,,,,
+"McCullers Jr., Lance",HOU,2025,1147,5.6,32,17,16.3,24.7,4.4,,,,,
+"McFarland, T.J.",Free Agent,2024,836,,,12.3,,49.2,0.1,,,38.4,,
+"McGough, Scott",Free Agent,2023,1233,50.6,9.3,,,0.5,,39.6,,,,
+"McGreevy, Michael",STL,2025,1465,25.3,0.8,10.3,12.1,22,9.8,,,19.6,,
+"McHugh, Collin",Free Agent,2023,1018,3.9,,0.4,2,,45.8,,,47.9,,
+"McKenzie, Triston",Free Agent,2024,1304,52.4,21,,26.6,,,,,,,
+"Mears, Nick",KC,2025,845,53.5,42.4,,4.1,,,,,,,
+"Mears, Nick",KC,2024,1028,60.2,22.6,,17.2,,,,,,,
+"Medina, Luis",OAK,2023,1945,41.4,23.4,8.7,12.1,14.4,,,,,,
+"Megill, Tylor",NYM,2025,1234,42.2,24.1,7.2,6.9,19.6,,,,,,
+"Megill, Tylor",NYM,2024,1365,46.7,11,1.5,7.7,9.9,14.2,7.5,,1.5,,
+"Megill, Tylor",NYM,2023,2235,55.6,20.7,14,8.6,0.6,,0.5,,,,
+"Mejia, Juan",COL,2025,1074,67.2,32.8,,,,,,,,,
+"Merryweather, Julian",Free Agent,2023,1228,40.8,49.2,7.5,,0.1,,,,2.4,,
+"Meyer, Max",MIA,2025,1039,22.2,35.1,17.3,,13.7,,,,11.6,,
+"Meyer, Max",MIA,2024,968,39.6,40.6,17.9,,1.9,,,,0.1,,
+"Middleton, Keynan",Free Agent,2023,856,26.3,30.8,42.9,,,,,,,,
+"Mikolas, Miles",Free Agent,2025,2483,27.7,23.3,11.5,17.6,17,,,,2.9,,
+"Mikolas, Miles",Free Agent,2024,2705,27.9,24.3,8.5,12.1,23,,,,4.1,,
+"Mikolas, Miles",Free Agent,2023,3197,26,24.3,5.4,20,24.4,,,,,,
+"Miley, Wade",Free Agent,2023,1873,19.4,4.9,24.6,2.2,4.6,44.3,,,,,
+"Miller, Bobby",LAD,2024,1053,36.8,9.6,19.9,19,14.7,,,,,,
+"Miller, Bobby",LAD,2023,1961,25.4,16.7,16,18.5,22.7,,,,0.7,,
+"Miller, Bryce",SEA,2025,1543,40.9,7.6,,10.8,16.5,1.2,18.7,,4.3,,
+"Miller, Bryce",SEA,2024,2749,42.1,8.3,,4.5,17.3,2.3,17.1,,8.5,,
+"Miller, Bryce",SEA,2023,2095,58.1,18.9,5.3,0.9,7.6,0.5,0.3,,8.5,,
+"Miller, Erik",SF,2024,1269,49.7,16.4,33.9,,,,,,,,
+"Miller, Mason",SD,2025,972,52.2,45.6,2.3,,,,,,,,
+"Miller, Mason",SD,2024,1024,63.1,35,1.8,,,,0.2,,,,
+"Miller, Shelby",Free Agent,2024,850,60.6,20.6,,,,,18.8,,,,
+"Miller, Tyson",Free Agent,2024,934,47.3,,2.2,3.2,3.4,,,,43.8,,
+"Milner, Hoby",CHC,2025,1157,14.8,,17.4,,32.8,,,,35.1,,
+"Milner, Hoby",CHC,2024,1043,21.5,,13.7,,31.9,,,,32.3,0.6,
+"Milner, Hoby",CHC,2023,1027,18.6,,17.3,,31,,,,33.1,,
+"Minter, A.J.",NYM,2023,1062,47.2,,13.9,,,38.9,,,,,
+"Misiorowski, Jacob",MIL,2025,1164,55.2,24.3,5.9,14.6,,,,,,,
+"Mize, Casey",DET,2025,2353,33.6,16.4,,,12.6,,24.2,,,13.3,
+"Mize, Casey",DET,2024,1789,38.2,26,,7.5,8.4,0.8,18.2,,,0.8,
+"Mlodzinski, Carmen",PIT,2025,1647,36.1,14.3,,8.9,15.1,0.2,15.2,,10.3,,
+"Mlodzinski, Carmen",PIT,2024,866,39.8,26.6,0.3,,,20.3,,,12.9,,
+"Molina, Anthony",Free Agent,2024,1048,48.3,21.2,22.4,7.1,,1,,,,,
+"Moll, Sam",CIN,2023,1025,25.9,,1.4,,34.9,,,,37.9,,
+"Montas, Frankie",Free Agent,2024,2633,33,6.3,,,19.3,18.8,18.3,,4.3,,
+"Montero, Keider",DET,2025,1473,30.8,21.9,12.8,14.5,19.9,,,,0.1,,
+"Montero, Keider",DET,2024,1539,41.5,28.5,10.7,11.5,7.9,,,,,,
+"Montero, Rafael",Free Agent,2025,1088,40.3,7.6,,,5.1,,46.9,,,,
+"Montero, Rafael",Free Agent,2023,1253,49.2,14,22.1,,14.7,,,,,,
+"Montgomery, Jordan",Free Agent,2024,1929,17.2,1.8,19.3,30.7,30.9,,,,,,
+"Montgomery, Jordan",Free Agent,2023,2920,10.9,0.2,22.9,22.2,42.7,1.2,,,,,
+"Moore, Matt",Free Agent,2023,842,47.9,,31.3,20.7,0.1,,,,,,
+"Morejon, Adrian",SD,2025,999,3.1,24.6,6.6,,61.7,3.5,,0.5,,,
+"Morejon, Adrian",SD,2024,1064,23.2,29.8,,0.8,36.2,,,7.8,2.2,,
+"Moreta, Dauri",Free Agent,2023,962,26.4,64.8,8.8,,,,,,,,
+"Morgan, Eli",Free Agent,2023,1200,40.4,25.4,31.7,2.5,,,,,,,
+"Morton, Charlie",Free Agent,2025,2548,27.6,,9.9,38.3,15.1,9,,,,,
+"Morton, Charlie",Free Agent,2024,2791,28.6,,11,42.4,10.2,7.8,,,,,
+"Morton, Charlie",Free Agent,2023,2842,32.4,,10.3,43.2,6.2,8,,,,,
+"Muller, Kyle",SEA,2023,1454,51.5,25.3,8.3,14.9,,,,,,,
+"Muñoz, Andrés",SEA,2025,1035,35.1,50.4,2.1,,12.4,,,,,,
+"Muñoz, Andrés",HOU,2024,951,32.3,47.1,,,20.6,,,,,,
+"Muñoz, Roddery",Free Agent,2024,1485,27,20.3,9.3,,22.7,20.7,,,,,
+"Musgrove, Joe",SD,2024,1582,24.7,0.3,7.8,22.5,4.2,20.4,,,20,,
+"Musgrove, Joe",SD,2023,1550,24.6,14.4,11.4,23.9,5.3,20.4,,,0.1,,
+"Myers, Tobias",NYM,2025,826,45.2,16.8,1.5,1.5,,19.5,15.6,,,,
+"Myers, Tobias",NYM,2024,2152,40.5,21.1,11.4,4.1,0,22.8,,,,,
+"Nardi, Andrew",MIA,2023,958,61.3,37.8,0.9,,,,,,,,
+"Nelson, Kyle",Free Agent,2023,878,33.1,59.2,,,,7.6,,,,,
+"Nelson, Ryne",ARI,2025,2466,61.9,12.1,2.8,10.9,,12.2,,,,,
+"Nelson, Ryne",ARI,2024,2406,55.7,8.5,9.9,5.7,,18.4,,,1.8,,
+"Nelson, Ryne",ARI,2023,2355,54.5,11,13.3,5.2,0,13,,,3,,
+"Neris, Héctor",Free Agent,2024,1008,48.3,3.4,,,7.8,,40.5,,,,
+"Neris, Héctor",Free Agent,2023,1092,51.9,3.9,,,15.4,,28.8,,,,
+"Newcomb, Sean",CWS,2025,1546,29.9,,6.9,5.4,21.7,13.6,,,,22.4,
+"Nicolas, Kyle",PIT,2024,950,55.1,22,,22.9,,,,,,,
+"Nola, Aaron",PHI,2025,1568,30.3,,15.4,29.1,17.8,7.3,,,,,
+"Nola, Aaron",PHI,2024,3189,27.7,,9.6,32.9,20.6,9.2,,,,,
+"Nola, Aaron",PHI,2023,3087,29.7,,12.5,31.6,18.7,7.5,,,,,
+"Ober, Bailey",MIN,2025,2356,35.9,17.7,28.9,3.5,3.2,,,,10.7,,
+"Ober, Bailey",MIN,2024,2696,38.1,19.4,29.4,1.3,,,,,11.8,,
+"Ober, Bailey",MIN,2023,2327,45.7,2.4,28,6.7,,,,,17.1,,
+"Ohtani, Shohei",LAD,2023,2094,32.9,3.7,,3.7,6.5,12.2,5.8,,35.1,,
+"Okert, Steven",HOU,2025,1052,41.2,57.8,0.1,,,0.9,,,,,
+"Okert, Steven",HOU,2023,1019,38.6,61.3,,,0.1,,,,,,
+"Olson, Reese",DET,2025,1159,18.4,21.6,25.9,5.5,28.2,,,,0.4,,
+"Olson, Reese",DET,2024,1853,23.9,27.8,22.3,6,20,,,,,,
+"Olson, Reese",DET,2023,1743,29.7,30.6,15.1,5.8,18.7,,,,,,
+"Ortiz, Luis",Free Agent,2025,1501,29.4,25.9,12.9,,19.5,12.3,,,,,
+"Ortiz, Luis",Free Agent,2024,2143,26.7,26.8,0.9,,25.9,19.7,,,,,
+"Ortiz, Luis",Free Agent,2023,1462,25.3,32.7,13.7,,28.1,0.3,,,,,
+"Ottavino, Adam",Free Agent,2024,1003,10,2.1,5,0.8,33.8,11,,,37.4,,
+"Ottavino, Adam",Free Agent,2023,1024,5.6,0.1,13.9,,37.7,15,,,27.7,,
+"Oviedo, Johan",BOS,2023,2980,38.8,36.6,4.2,15.1,5.2,,,,,,
+"Paddack, Chris",Free Agent,2025,2565,42.7,9,23.5,11.9,5.9,7,,,,,
+"Paddack, Chris",Free Agent,2024,1460,42.9,17.7,25.9,13.6,,,,,,,
+"Pagán, Emilio",MIA,2025,1068,61.2,,,,,18.6,20.1,,,,
+"Pagán, Emilio",MIA,2023,1061,55,,,2.5,,30.1,12.3,,,,
+"Palencia, Daniel",Free Agent,2025,841,71.6,23.1,,0.4,0.4,,4.6,,,,
+"Pallante, Andre",Free Agent,2025,2720,44.1,28.5,,14,13.3,,,,0.1,,
+"Pallante, Andre",Free Agent,2024,1978,50.4,17.2,,12.6,19.8,,,,,,
+"Pallante, Andre",Free Agent,2023,1139,66.1,17.6,,13.4,2.9,,,,,,
+"Parker, Mitchell",Free Agent,2025,2705,55.5,11.9,,22,,,10.6,,,,
+"Parker, Mitchell",CIN,2024,2404,48.6,9.8,,22.5,,,19.1,,,,
+"Patrick, Chad",CIN,2025,2010,22.3,5.3,6.7,,23,41.1,,,,1.6,
+"Paxton, James",CHC,2024,1708,54.3,,6.6,30.3,5.7,3.1,,,,,
+"Paxton, James",STL,2023,1690,53.7,,6.7,19.7,3.6,16.3,,,,,
+"Payamps, Joel",STL,2024,899,32.7,40.3,7.7,,19.4,,,,,,
+"Payamps, Joel",STL,2023,1120,20,43.8,12.2,,24,,,,,,
+"Pearson, Nate",WSH,2024,1059,45.9,40.7,,11.5,1.8,,0.1,,,,
+"Peguero, Elvis",WSH,2024,829,,50.5,,0.1,49.3,,,,,,
+"Peguero, Elvis",MIL,2023,913,,50.9,,,49.1,,,,,,
+"Pepiot, Ryan",Free Agent,2025,2699,44.9,17.2,25,3.3,2.7,6.9,,,,,
+"Pepiot, Ryan",Free Agent,2024,2149,50.4,17.4,23.5,2.7,0.2,5.8,,,,,
+"Peralta, Freddy",ATL,2025,3086,53.5,9.4,21.2,15.8,,,,,,,
+"Peralta, Freddy",ATL,2024,3066,53.8,21.6,17.5,7.1,0.1,,,,,,
+"Peralta, Freddy",HOU,2023,2839,51.2,21.8,14.6,12.4,,,,,,,
+"Peralta, Wandy",Free Agent,2025,1138,3.1,16.6,34.5,,45.8,,,,,,
+"Peralta, Wandy",Free Agent,2023,878,4.2,13.1,44.2,,38.5,,,,,,
+"Pérez, Cionel",TB,2024,864,24.2,,,0.1,38.3,,,,,37.4,
+"Pérez, Cionel",TB,2023,877,26.5,0.1,,6.5,37.1,,,,,29.9,
+"Pérez, Eury",NYM,2025,1673,51.3,23,7.8,9.1,1.1,,,,7.7,,
+"Pérez, Eury",NYM,2023,1534,45.4,30.8,9.8,14,,,,,,,
+"Pérez, Martín",NYM,2025,902,3.5,,28.8,8.3,31.2,28.2,,,,,
+"Pérez, Martín",SD,2024,2204,4.6,0,22.7,14.1,36.6,22,,,,,
+"Pérez, Martín",SD,2023,2223,5,1,26.5,3.7,41.8,22,,,,,
+"Peterson, David",NYM,2025,2699,22.3,19.1,15.3,13.7,29.6,,,,,,
+"Peterson, David",NYM,2024,1871,26.2,18.4,16.4,7.6,31.3,,,,,,
+"Peterson, David",NYM,2023,1966,27.5,19.8,18.9,8.8,25,,,,,,
+"Pfaadt, Brandon",ARI,2025,2920,23.4,,15.7,9.9,23.4,8.9,,,18.6,,
+"Pfaadt, Brandon",ARI,2024,2793,33.3,,11.3,5.3,22.2,,0.6,,27.3,,
+"Pfaadt, Brandon",ARI,2023,1612,45.3,,12.2,5.5,9.9,,,,27,,
+"Phillips, Evan",Free Agent,2024,917,36.5,,,,9.9,14.9,,,38.6,,
+"Phillips, Evan",Free Agent,2023,915,19.9,,,,10.7,23.9,,,45.5,,
+"Phillips, Tyler",MIA,2025,1114,8.9,,,23.4,31.6,,13.6,,22.4,,
+"Pivetta, Nick",SD,2025,2851,48.5,0,,22.4,2.3,8.1,0.2,,18.5,,
+"Pivetta, Nick",SD,2024,2387,48.5,3.5,,16.3,0.1,5.9,,,25.7,,
+"Pivetta, Nick",SD,2023,2383,50.6,11.1,,24.7,,7.8,0.5,,5.4,,
+"Poche, Colin",Free Agent,2023,927,65,35,,,,,,,,,
+"Povich, Cade",BAL,2025,1971,36.8,,15.6,21.8,12.3,2,,,11.5,,
+"Povich, Cade",BAL,2024,1389,40.7,6.3,10.9,19.6,8.4,7.5,,,6.7,,
+"Pressly, Ryan",Free Agent,2024,969,33,28.9,11.1,24.9,2.1,,,,,,
+"Pressly, Ryan",Free Agent,2023,1024,23.1,40,8.9,26.6,0.2,1.2,,,,,
+"Priester, Quinn",MIL,2025,2468,,27.2,1.5,9.2,41.7,20.5,,,,,
+"Priester, Quinn",MIL,2023,866,18.9,23.3,10.6,13,34.1,,,,,,
+"Puk, A.J.",ARI,2024,1173,43.2,21.7,1.4,,14.7,,2.6,,16.4,,
+"Puk, A.J.",ARI,2023,950,51.2,0.9,0.8,,4.9,,0.4,,41.7,,
+"Quantrill, Cal",Free Agent,2025,2004,15,8.2,0.1,11.8,22.1,21.7,21.1,,,,
+"Quantrill, Cal",Free Agent,2024,2643,16.3,0.6,2.2,11.8,24,12.9,32.2,,,,
+"Quantrill, Cal",Free Agent,2023,1710,16,,10.1,10.9,26.5,24.1,12.3,,,,
+"Quintana, Jose",Free Agent,2025,2174,11.7,,22.1,14.5,44,,,,,7.7,
+"Quintana, Jose",Free Agent,2024,2819,22.5,,19.3,21.9,30.4,,,,,6,
+"Quintana, Jose",Free Agent,2023,1229,24.5,,18.1,20.4,32.1,,,,,4.9,
+"Ragans, Cole",KC,2025,1079,49.5,13.8,19.2,12.8,,4.7,,,,,
+"Ragans, Cole",KC,2024,3118,41.7,12.8,23.7,10.4,0.1,11.3,,,,,
+"Ragans, Cole",KC,2023,1586,40.1,10.4,23.7,12.4,,13.4,,,,,
+"Rainey, Tanner",Free Agent,2024,939,70.9,27.7,1.4,,,,,,,,
+"Raley, Brooks",NYM,2023,982,0.7,,15.1,,24.9,23,,,36.3,,
+"Ramírez, Erasmo",Free Agent,2023,962,4.7,5.4,7.7,8.1,29.3,43.7,,,1.1,,
+"Rasmussen, Drew",TB,2025,2316,35.4,,1.2,4.3,22.8,31.5,,,4.8,,
+"Ray, Robbie",SF,2025,3069,52,22.5,13,12.1,,,,,0.4,,
+"Rea, Colin",CHC,2025,2534,41.5,10.1,,9.1,10.5,7.4,12,,9.2,,
+"Rea, Colin",CHC,2024,2650,19.5,,,4.5,30.9,19.4,8.9,,16.8,,
+"Rea, Colin",CHC,2023,2016,19.1,,,7.9,30.1,26.4,5.6,,11,,
+"Richards, Trevor",Free Agent,2024,1182,45.4,0.3,53.3,,0.9,,,,,,
+"Richards, Trevor",Free Agent,2023,1352,43.4,0.5,56.1,,,,,,,,
+"Robertson, David",Free Agent,2024,1211,,6.8,1.7,26.7,1.4,63.4,,,,,
+"Robertson, David",Free Agent,2023,1068,,19.9,1.4,25.2,0.1,53.4,,,,,
+"Rocker, Kumar",TEX,2025,1127,20.2,16,6.1,6.3,26,25.4,,,,,
+"Rodón, Carlos",NYY,2025,3212,41.8,28.4,16.2,3.8,9.6,0.2,,,,,
+"Rodón, Carlos",NYY,2024,3102,49.4,26,12.9,8.3,0,3.5,,,,,
+"Rodón, Carlos",NYY,2023,1133,60.3,28.9,4.3,6.4,,0.1,,,,,
+"Rodriguez, Eduardo",SF,2025,2589,45.5,5,20.4,3.6,9.7,15.7,,,,,
+"Rodriguez, Eduardo",SF,2024,866,42.6,6.9,22.5,,8.8,19.2,,,,,
+"Rodriguez, Eduardo",Free Agent,2023,2446,45.3,7.2,18.9,,9.5,19.1,,,,,
+"Rodriguez, Grayson",Free Agent,2024,1879,47.7,15.8,21,15.5,,,,,,,
+"Rodriguez, Grayson",ARI,2023,2104,49.6,1.2,22.4,8.1,,4.4,,,14.4,,
+"Rodríguez, Randy",ARI,2025,808,55.4,44.6,,,,,,,,,
+"Rodríguez, Randy",ARI,2024,879,48.6,39.8,5.6,,6,,,,,,
+"Rodríguez, Yariel",LAA,2025,1159,40.8,41.3,,,6,,11.9,,,,
+"Rodríguez, Yariel",LAA,2024,1502,41,28.2,,10.5,10.8,,9.5,,,,
+"Rogers, Taylor",MIN,2025,894,0.1,,,,49,,,,50.9,,
+"Rogers, Taylor",MIN,2024,1082,,,,,52.8,,,,47.2,,
+"Rogers, Taylor",MIN,2023,834,0.7,,,,40.8,2,,,56.5,,
+"Rogers, Trevor",BAL,2025,1627,40.7,12,25,,15.1,,,,7.3,,
+"Rogers, Trevor",BAL,2024,2243,31.7,20.6,23.5,,24.2,,,,,,
+"Rogers, Tyler",TOR,2025,978,,25.5,,,74.5,,,,,,
+"Rogers, Tyler",TOR,2024,1002,0.6,35.5,,,63.9,,,,,,
+"Rogers, Tyler",TOR,2023,1124,1,48.8,,,50.2,,,,,,
+"Romano, Jordan",LAA,2023,915,45.8,54.2,,,,,,,,,
+"Romero, JoJo",STL,2025,990,6,38,22.5,,32.2,0.1,,,,1.2,
+"Romero, JoJo",STL,2024,919,9.9,33.9,17.1,,39,0.1,,,,,
+"Ross, Joe",Free Agent,2025,862,35.4,22.2,8.4,5.3,28.8,,,,,,
+"Ross, Joe",Free Agent,2024,1197,16.2,37.3,8.3,1.7,36.5,,,,,,
+"Roupp, Landen",SF,2025,1851,0.7,,17.1,35.7,39.9,6.7,,,,,
+"Roupp, Landen",SF,2024,907,2.6,4.2,9.4,44.2,39.6,,,,,,
+"Ruiz, José",Free Agent,2024,835,28.1,3.8,3.2,41.2,23.6,,,,,,
+"Rutledge, Jackson",WSH,2025,1339,18.7,25.8,,,32.6,13.4,9.4,,,,
+"Ryan, Joe",MIN,2025,2795,50.2,9.3,,4,12.4,,11.1,,13,,
+"Ryan, Joe",MIN,2024,2106,48.3,7.1,,,6.2,,22.2,,16.2,,
+"Ryan, Joe",MIN,2023,2683,56.8,6.1,,,0,,24.7,,12.3,,
+"Ryu, Hyun Jin",Free Agent,2023,830,27.5,,22.8,17.1,13.7,18.9,,,,,
+"Sale, Chris",PHI,2025,2031,41.7,47.3,7.5,,3.5,,,,,,
+"Sale, Chris",PHI,2024,2815,38.2,40.3,14.2,,7.3,,,,,,
+"Sale, Chris",PHI,2023,1670,43.2,37.5,13.1,,6.2,,,,,,
+"Sánchez, Cristopher",ATL,2025,2896,,16.6,37.4,,46,,,,,,
+"Sánchez, Cristopher",ATL,2024,2797,,16.8,35.7,,47.3,0.2,,,,,
+"Sánchez, Cristopher",ATL,2023,1460,0.1,21.1,32.8,,46,,,,,,
+"Sandlin, Nick",Free Agent,2024,1003,29.9,34.8,,,8.8,,26.5,,,,
+"Sandlin, Nick",Free Agent,2023,1008,26.5,49.7,,,19.5,,4.4,,,,
+"Sandoval, Patrick",BOS,2024,1444,15.9,24.7,28.3,9,17.5,,,,4.6,,
+"Sandoval, Patrick",BOS,2023,2620,25.2,26.1,25.8,9,11.4,,,,2.6,,
+"Sands, Cole",MIN,2025,1143,26.6,,,18.6,9,24.1,21.6,,,,
+"Sands, Cole",MIN,2024,1154,28.9,,,14.1,10.2,29.6,17.2,,,,
+"Santana, Dennis",PIT,2025,1002,28.6,46.4,6.4,,8.2,10.4,,,,,
+"Santana, Dennis",PIT,2024,1106,26.4,32.3,8.4,0.2,13.2,19.5,,,,,
+"Santillan, Tony",CIN,2025,1230,65,13.4,0.1,,,,,,,21.5,
+"Santos, Gregory",Free Agent,2023,1047,0.3,52.6,1.2,,45.8,,,,,,
+"Sborz, Josh",Free Agent,2023,835,36.2,38,,25.8,,,,,,,
+"Scherzer, Max",Free Agent,2025,1390,48.5,23.7,14,11.9,,1.9,,,,,
+"Scherzer, Max",Free Agent,2023,2465,46.3,16.8,14.1,12.4,,10.4,,,,,
+"Schlittler, Cam",NYY,2025,1253,55.9,,,14.9,6.1,20.8,,,2.3,,
+"Schmidt, Clarke",NYY,2025,1226,8.2,12.9,,18.2,8.2,40.5,,,12.2,,
+"Schmidt, Clarke",NYY,2024,1454,0.1,1.8,0.6,17.1,20.8,35,,,24.5,,
+"Schmidt, Clarke",NYY,2023,2712,0,,1.5,19.1,24,28,,,27.4,,
+"Scholtens, Jesse",TB,2023,1447,43.4,36.6,3,16.5,,,0.6,,,,
+"Schreiber, John",KC,2025,1047,31.5,,2,,19.5,18.7,,,28.3,,
+"Schreiber, John",KC,2024,895,24.4,,6.1,,26,16.5,,,26.9,,
+"Schwellenbach, Spencer",ATL,2025,1573,35.3,18.1,,11.4,10,11.3,13.9,,,,
+"Schwellenbach, Spencer",ATL,2024,1887,28.8,19.9,,14.6,7,16.9,12.8,,,,
+"Scott, Tanner",LAD,2025,911,52.7,47.2,0.1,,,,,,,,
+"Scott, Tanner",LAD,2024,1163,59.2,40.7,0.1,,0.1,,,,,,
+"Scott, Tanner",LAD,2023,1208,47.3,52.6,,,0.1,,,,,,
+"Scott, Tayler",Free Agent,2024,1203,48.5,,,,5.7,,23.7,,22.1,,
+"Seabold, Connor",Free Agent,2023,1562,53.6,30.5,13.3,1.8,0.8,,,,,,
+"Sears, JP",SD,2025,2366,40.2,6.9,15,3.7,6.8,0.6,,,26.9,,
+"Sears, JP",SD,2024,2857,36.1,8.4,19.2,0.6,10.7,,,,24.9,,
+"Sears, JP",SD,2023,2867,50.1,15.4,15.1,0,0.1,,,,19.1,,
+"Senga, Kodai",NYM,2025,1902,31.5,5.9,,1.7,6,20.3,,,6.2,,28.4
+"Senga, Kodai",NYM,2023,2795,37,5.8,,2.6,,25,,,5.9,,23.8
+"Senzatela, Antonio",COL,2025,2284,57.6,19.7,7.4,14.4,0.9,,,,,,
+"Severino, Luis",OAK,2025,2731,28.2,4,5.3,,20.2,17.5,,,24.8,,
+"Severino, Luis",OAK,2024,2890,35.7,7,7.5,,24.6,8.1,,,17.2,,
+"Severino, Luis",OAK,2023,1636,43.5,17.8,18.5,,4.3,14.9,,,1,,
+"Sewald, Paul",Free Agent,2023,1037,56.9,,,,0.3,,,,42.8,,
+"Seymour, Ian",TB,2025,995,31.9,,31.7,1.5,5.4,21.5,,,8,,
+"Sheehan, Emmet",LAD,2025,1146,46.8,30.4,16.7,6.1,,,,,,,
+"Sheehan, Emmet",LAD,2023,1031,59.9,18.9,17.2,,0.1,,,,3.9,,
+"Shuster, Jared",Free Agent,2024,1290,38.2,28.4,29.4,,4,,,,,,
+"Shuster, Jared",Free Agent,2023,864,43.9,32.9,23,,0.2,,,,,,
+"Silseth, Chase",LAA,2023,888,35.6,2.7,,2.4,14.2,8.4,16.7,,20,,
+"Sims, Lucas",Free Agent,2023,1057,43.4,1.5,,5.9,0.2,,,,49.1,,
+"Singer, Brady",CIN,2025,2850,10.5,28.4,,,40.6,9.4,,,11.1,,
+"Singer, Brady",CIN,2024,2967,11,40.3,1.8,,41.6,0,,,5.2,,
+"Singer, Brady",CIN,2023,2612,1.6,42,6.3,,49.5,,,,0.5,,
+"Skenes, Paul",PIT,2025,2997,38.9,5.6,10.9,4.8,10.4,,13.5,,15.8,,
+"Skenes, Paul",PIT,2024,2125,39.2,6.2,5.4,10.8,,,28.4,,10,,
+"Skubal, Tarik",DET,2025,2849,29.3,12.5,31.4,2.8,23.9,,0.1,,,,
+"Skubal, Tarik",DET,2024,2866,33.2,14.9,27,4.2,20.6,,0.1,,,,
+"Skubal, Tarik",DET,2023,1218,36,20.7,24.1,6.8,12.1,,0.2,,,,
+"Slaten, Justin",BOS,2024,811,29.2,,,8.4,,37.7,,,24.7,,
+"Smith, Burch",Free Agent,2024,896,50,,0.8,18.3,0.2,21.4,,,9.3,,
+"Smith, Cade",CLE,2025,1182,69.9,,,,,,21.2,,8.9,,
+"Smith, Cade",CLE,2024,1166,69.1,,,,,,20.7,,10.2,,
+"Smith, Drew",Free Agent,2023,1082,61.2,20.8,9.3,8.5,0.1,0.1,,,,,
+"Smith, Shane",CWS,2025,2419,45,11.1,16.8,14.6,12.4,,,,0.1,,
+"Smith, Will",Free Agent,2023,863,38.9,50.2,2.9,8,,,,,,,
+"Smyly, Drew",Free Agent,2024,1016,0.3,,,48.6,47.7,3.3,,,,,
+"Smyly, Drew",Free Agent,2023,2401,0.2,,,49.4,38.5,11.9,,,,,
+"Snell, Blake",LAD,2025,1028,43.6,11.1,23.6,21.7,,,,,,,
+"Snell, Blake",LAD,2024,1773,46.3,10,17.5,26.1,0.1,,,,,,
+"Snell, Blake",LAD,2023,3168,48.6,13.1,18.4,19.8,0.1,,,,,,
+"Soriano, George",Free Agent,2023,883,40.4,37.9,21.6,,,,,,,,
+"Soriano, José",LAA,2025,2784,8.6,6.1,0.4,26.6,49.1,,9.2,,,,
+"Soriano, José",LAA,2024,1737,14.6,5.5,,25.3,46.4,,8.1,,,,
+"Soroka, Michael",ARI,2025,1528,45.4,,10.1,,9.7,,,,,34.8,
+"Soroka, Michael",ARI,2024,1442,32.3,32.5,9.8,,21.4,,,,,4.1,
+"Soto, Gregory",PIT,2025,1031,7.1,34.7,,,52.5,,0.4,,5.3,,
+"Soto, Gregory",PIT,2024,960,10.9,33.5,,,46.9,0.7,,,7.9,,
+"Soto, Gregory",PIT,2023,966,17.7,39,0.2,,43.1,,,,,,
+"Sousa, Bennett",HOU,2025,728,40.5,58.1,,,1.4,,,,,,
+"Speier, Gabe",SEA,2025,921,44.7,25.7,,,29.5,,,,,,
+"Speier, Gabe",SEA,2023,782,20.6,31.8,1.7,,45.9,,,,,,
+"Spence, Mitch",OAK,2025,1354,,26.8,1,17.6,9.4,45.2,,,,,
+"Spence, Mitch",OAK,2024,2481,,32.7,1.1,12.1,14.6,39.6,,,,,
+"Spiers, Carson",Free Agent,2024,1554,29.8,0.8,12.1,,17.6,16,,,23.7,,
+"Springs, Jeffrey",OAK,2025,2847,42.5,20.4,25.3,,,5.7,,,6.1,,
+"Stanek, Ryne",STL,2025,1063,57.1,21.4,,,0.1,,11.9,,9.6,,
+"Stanek, Ryne",STL,2024,977,59.3,16.6,,,2.8,,21.4,,,,
+"Stanek, Ryne",STL,2023,864,64.2,17.6,,,,,18.2,,,,
+"Steele, Justin",CHC,2024,2046,59.7,29.7,3.2,2.2,5.2,,,,,,
+"Steele, Justin",CHC,2023,2678,62.8,33.8,1,0.7,1.6,,,,,,
+"Stephan, Trevor",Free Agent,2023,1128,47.7,24.1,,,,,28.1,,,,
+"Stephenson, Robert",LAA,2023,763,23.6,24.1,,0.3,,41.4,10.6,,,,
+"Sterner, Justin",OAK,2025,1093,52.2,,,,,32.4,,,15.4,,
+"Stone, Gavin",LAD,2024,2153,25.7,14.8,26.7,4.2,21.6,5.3,,,1.7,,
+"Strahm, Matt",KC,2025,993,37.6,31.9,0.6,,15.3,14.6,,,,,
+"Strahm, Matt",KC,2024,981,53.4,19.4,0.1,,15.3,11.8,,,,,
+"Strahm, Matt",KC,2023,1366,45.1,26.4,0.4,,18.8,9.3,,,,,
+"Stratton, Chris",Free Agent,2024,995,37.8,20.6,10,22.1,9.2,,,,0.3,,
+"Stratton, Chris",Free Agent,2023,1357,54.3,19.3,7.1,18.6,0.5,,,,0.1,,
+"Strickland, Hunter",Free Agent,2024,1157,31.7,13.1,6.1,,9.2,31.4,,,8.5,,
+"Strider, Spencer",ATL,2025,2110,51.2,35.3,4.6,8.9,,,,,,,
+"Strider, Spencer",ATL,2023,3100,58.9,33.8,7.3,,,,,,,,
+"Stripling, Ross",Free Agent,2024,1358,30.7,13.4,17.6,8.6,13.8,15.9,,,,,
+"Stripling, Ross",Free Agent,2023,1453,26.5,27.6,24.4,9.9,8.9,1.7,0.9,,,,
+"Stroman, Marcus",Free Agent,2024,2667,3,16,,2.6,35.2,18.3,11.1,,,13.9,
+"Stroman, Marcus",Free Agent,2023,2203,8.3,5.1,,,46.4,9.6,7.6,,,23,
+"Suárez, Albert",Free Agent,2024,2234,50,,17.2,13.1,,19.5,,,,0.2,
+"Suarez, José",BOS,2024,987,40,13.3,24.7,0.3,8.7,1.1,,,11.9,,
+"Suárez, Ranger",BOS,2025,2430,14.7,4.2,19.1,16.2,28.5,17.4,,,,,
+"Suárez, Ranger",BOS,2024,2354,19.6,0.1,16.3,20.5,31.4,12.1,,,,,
+"Suárez, Ranger",ATL,2023,2023,21.4,0.4,18.3,19,28.2,12.7,,,,,
+"Suarez, Robert",ATL,2025,1076,63.4,,23.9,,12.5,0.2,,,,,
+"Suarez, Robert",ATL,2024,977,69.5,,12.6,,17.5,0.4,,,,,
+"Sugano, Tomoyuki",Free Agent,2025,2565,18.9,,,9.7,16.1,12,23.5,,19.8,,
+"Suter, Brent",Free Agent,2025,1137,42.2,12.2,22.5,,23.1,,,,,,
+"Suter, Brent",Free Agent,2024,1022,43.1,16.2,19.8,,20.9,,,,,,
+"Suter, Brent",Free Agent,2023,1129,30.6,10.8,28.3,,30.4,,,,,,
+"Svanson, Matt",STL,2025,964,1.3,,,,47.4,16.4,,,34.9,,
+"Swanson, Erik",Free Agent,2023,1059,34.7,17.8,,,,,47.5,,,,
+"Syndergaard, Noah",Free Agent,2023,1408,18,6.8,22.2,14.1,26.1,12.5,0.3,,,,
+"Taillon, Jameson",CHC,2025,1979,37.9,,11.2,13.3,7.4,14.6,,,15.6,,
+"Taillon, Jameson",CHC,2024,2483,29.5,,4.3,14.7,11,25.1,,,15.5,,
+"Taillon, Jameson",CHC,2023,2533,35.1,0.4,3.1,14.8,9.6,22,,,15.1,,
+"Teheran, Julio",Free Agent,2023,1080,9.4,,11.8,11.5,38.7,28.7,,,,,
+"Thielbar, Caleb",CHC,2025,839,42.1,14.4,,28.1,,,,,15.4,,
+"Thompson, Mason",Free Agent,2023,895,6.9,28.5,0.2,8.4,56,,,,,,
+"Thompson, Ryan",ARI,2024,977,10.1,25.7,,,64.2,,,,,,
+"Thompson, Zack",Free Agent,2023,1168,53.7,17,2.1,27.3,,,,,,,
+"Thornton, Trent",Free Agent,2024,1139,19.8,21.7,2.5,12,9.5,4.1,,,30.3,,
+"Tonkin, Michael",Free Agent,2024,1419,37.8,35.5,,,17.1,,,,9.6,,
+"Tonkin, Michael",Free Agent,2023,1283,61.2,37.3,,,,,,,1.6,,
+"Topa, Justin",MIN,2025,980,,,15,,35.6,20,,,29.3,,
+"Topa, Justin",MIN,2023,1046,,,6.8,,44.6,18.5,,,30,,
+"Toussaint, Touki",Free Agent,2023,1595,23.6,2.3,,28.8,26.5,,18.8,,,,
+"Turnbull, Spencer",Free Agent,2024,916,35,5.3,5.3,9,12.1,,,,33.2,,
+"Uceta, Edwin",TB,2025,1214,40.6,,38.9,,1.6,15.9,,,3,,
+"Ureña, José",Free Agent,2025,934,10.2,25.7,24.6,,36.2,,3.3,,,,
+"Ureña, José",Free Agent,2024,1760,5.3,34.6,18.2,,41.9,,,,,,
+"Urías, Julio",Free Agent,2023,1849,45,,15.7,,0.1,9.2,,,,30,
+"Uribe, Abner",MIL,2025,1164,2.1,46,,,51.8,,,,,,
+"Urquidy, José",Free Agent,2023,1096,38.1,,21.6,11.6,9.9,,,,18.7,,
+"Valdez, Framber",SD,2025,2891,0.7,3.1,17.8,33.1,45.2,,,,,,
+"Valdez, Framber",SD,2024,2598,0.7,4.3,17.5,31.3,46.2,,,,,,
+"Valdez, Framber",Free Agent,2023,2952,0.2,8.7,15.6,25.3,46.8,3.4,,,,,
+"Vargas, Carlos",Free Agent,2025,1095,3.5,18.6,1.9,,63.4,12.6,,,,,
+"Varland, Louis",Free Agent,2025,1066,45.3,7.1,4.6,37.4,5.5,,,,,,
+"Varland, Louis",SEA,2023,1091,42.6,32,11.3,,1,,,,13.1,,
+"Vasil, Mike",TOR,2025,1646,14,,12.2,12.3,39.9,5.5,,,16.1,,
+"Vásquez, Randy",TOR,2025,2148,21,2.1,6.9,12.8,19.1,24.9,,,13.1,,
+"Vásquez, Randy",CWS,2024,1687,28.1,0.2,12.4,16.4,16,13.8,,,13.1,,
+"VerHagen, Drew",Free Agent,2023,1042,27.3,,11.2,,17.9,12.6,,,31.1,,
+"Verlander, Justin",Free Agent,2025,2608,45.3,23.3,8.5,14.6,0.4,,,,7.9,,
+"Verlander, Justin",Free Agent,2024,1580,48.5,19.3,10.1,21.9,0.1,,,,,,
+"Verlander, Justin",Free Agent,2023,2602,50,25.3,4.7,20,,,,,,,
+"Vesia, Alex",LAD,2025,1023,57.5,36.4,6.2,,,,,,,,
+"Vesia, Alex",LAD,2024,1109,63.1,31.7,5,,0.1,,,,,,
+"Vest, Will",DET,2025,1137,52.4,23.8,7,,16.7,,,,,,
+"Vest, Will",DET,2024,1162,56,21.6,9.8,,12.6,,,,,,
+"Vodnik, Victor",COL,2025,919,56,12.8,26.1,,,5,,,,,
+"Vodnik, Victor",COL,2024,1341,63.2,20.1,16.6,,0.1,,,,,,
+"Voth, Austin",Free Agent,2024,974,23.7,,,18.9,,33.8,,,23.6,,
+"Wacha, Michael",KC,2025,2666,27,12.2,25.4,7.7,12.7,15,,,,,
+"Wacha, Michael",KC,2024,2602,23.3,9.2,32.2,8.1,15.7,11.4,,,,,
+"Wacha, Michael",KC,2023,2221,28.7,0.3,34.5,11,13.3,12.2,,,,,
+"Wainwright, Adam",Free Agent,2023,1785,10,0.3,5,30.8,31.4,22.6,,,,,
+"Waldichuk, Ken",TB,2023,2553,54.3,,16.6,2,0,,,,27.1,,
+"Waldrep, Hurston",ATL,2025,886,2.6,11.5,,13.2,18.3,22,32.4,,,,
+"Waldron, Matt",SD,2024,2450,18.7,,,,14.6,8.7,,38.2,19.8,,
+"Walker, Ryan",SF,2025,1018,,37.5,,,62.5,,,,,,
+"Walker, Ryan",SF,2024,1221,0.6,44.8,,,54.7,,,,,,
+"Walker, Ryan",SF,2023,1079,1.1,50.3,,0.1,48.5,,,,,,
+"Walker, Taijuan",PHI,2025,2061,9.5,11.3,,6.5,20.2,30.1,22.5,,,,
+"Walker, Taijuan",PHI,2024,1435,12.5,0.8,,10.8,27.4,9.5,22.1,,16.9,,
+"Walker, Taijuan",PHI,2023,2837,17.6,,,5.7,23.2,17.2,33.2,,3.1,,
+"Walter, Brandon",HOU,2025,814,19.3,,18.3,,12.5,27.4,,,22.5,,
+"Warren, Will",NYY,2025,2802,41.6,,9.8,7,21,,,,20.6,,
+"Weathers, Ryan",NYY,2024,1413,39.2,0.6,26,,12.5,,,,21.6,,
+"Weathers, Ryan",NYY,2023,1073,53.7,,23.5,,2.5,,,,20.3,,
+"Weaver, Luke",NYM,2025,1049,59.2,1.6,29.8,,,9.3,,,,,
+"Weaver, Luke",NYM,2024,1374,48.3,0.4,27.7,1.2,0.1,22.1,,,,,
+"Weaver, Luke",NYM,2023,2258,41.7,10.5,20,11.8,1.8,11,,,3.1,,
+"Webb, Jacob",CHC,2025,978,44.5,,34.7,,,,,,20.9,,
+"Webb, Jacob",CHC,2024,934,44.3,,27.7,,,,,,28.1,,
+"Webb, Jacob",CHC,2023,928,48.9,,27.6,,,,,,23.5,,
+"Webb, Logan",SF,2025,3282,7.7,,24.1,,33.7,7.9,,,26.6,,
+"Webb, Logan",SF,2024,3201,5.5,,30.9,,39.7,2.6,,,21.3,,
+"Webb, Logan",SF,2023,3182,4.1,,41.6,,33.2,,,,21.2,,
+"Weems, Jordan",Free Agent,2023,920,48,43.4,,0.7,,,7.9,,,,
+"Weissert, Greg",BOS,2025,1069,33.4,16.2,9.7,4,27.8,,,,8.9,,
+"Weissert, Greg",BOS,2024,1029,21.4,5.7,8.8,,33.2,1.7,,,29.2,,
+"Wells, Tyler",BAL,2023,1903,37.7,16.3,18.5,7.8,,19.7,,,,,
+"Wentz, Joey",ATL,2025,1815,44.1,26.4,3.5,17.7,,8.3,,,,,
+"Wentz, Joey",ATL,2024,1224,36.5,,19.1,13,,31.4,,,,,
+"Wentz, Joey",ATL,2023,1930,41.6,,17.5,15.8,,25.1,,,,,
+"Wesneski, Hayden",HOU,2024,1075,36,,2.8,,11.8,8.7,,,40.7,,
+"Wesneski, Hayden",HOU,2023,1479,28.9,0.3,4.9,,19.6,10.3,,,36,,
+"Wheeler, Zack",PHI,2025,2394,41,,,9.8,17,8.6,8.9,,14.8,,
+"Wheeler, Zack",PHI,2024,3134,41.4,,,10.1,19,9.6,7.3,,12.5,,
+"Wheeler, Zack",PHI,2023,3155,43.3,,0.4,11.4,18.2,14.4,,,12.3,,
+"Whitlock, Garrett",BOS,2025,1180,,30.9,20.8,,47.1,,,,1.1,,
+"Whitlock, Garrett",BOS,2023,1195,5.4,0.2,24.1,,47.5,,,,22.8,,
+"Williams, Devin",NYM,2025,1115,47.4,,52.4,,,0.2,,,,,
+"Williams, Devin",NYM,2023,948,39,,57.9,,,3.1,,,,,
+"Williams, Gavin",CLE,2025,2925,37.4,,0.1,22,6.6,14,,,19.9,,
+"Williams, Gavin",CLE,2024,1368,51.5,11.2,5.4,19.8,,12.1,,,,,
+"Williams, Gavin",CLE,2023,1386,55.4,22.1,5.6,17,,,,,,,
+"Williams, Trevor",WSH,2025,1448,42.3,8.8,12.8,,8.6,,,,27.5,,
+"Williams, Trevor",WSH,2024,1064,36,13.5,16.8,,12.5,,,,21.1,,
+"Williams, Trevor",WSH,2023,2622,43.1,15.5,17,6.9,14.7,,,,2.8,,
+"Williamson, Brandon",CIN,2023,1939,37.1,0.8,16.5,6.3,0.1,29.8,,,9.4,,
+"Wilson, Bryse",Free Agent,2024,1643,14.9,,4.3,13.9,32.1,34.9,,,,,
+"Wilson, Bryse",Free Agent,2023,1156,16.6,,0.7,13.4,34.7,34.5,0.1,,,,
+"Wilson, Steven",TB,2025,974,33.4,,7.3,,,1,,,58.3,,
+"Wilson, Steven",TB,2023,938,36.4,,3.2,,,0.9,,,59.6,,
+"Winckowski, Josh",Free Agent,2024,1240,5.2,13.3,12.6,,33.7,35.2,,,,,
+"Winckowski, Josh",Free Agent,2023,1383,5.1,20.1,5.1,,38.1,31.6,,,,,
+"Winn, Keaton",SF,2024,877,26.3,13.9,,,19.2,,40.5,,,,
+"Woo, Bryan",SEA,2025,2714,47.1,10.1,7.1,,25.7,,,,9.9,,
+"Woo, Bryan",SEA,2024,1716,48.8,9.6,9.4,,23.2,,,,9.1,,
+"Woo, Bryan",SEA,2023,1448,46.9,15.1,3.7,,25.5,,,,8.8,,
+"Wood, Alex",Free Agent,2023,1708,0.1,26.1,29.3,,44.5,,,,,,
+"Woodruff, Brandon",MIL,2025,964,30.7,,17.6,3.7,30.9,15.8,,,1.2,,
+"Woodruff, Brandon",MIL,2023,1043,41.2,9.8,19.7,7.6,21.8,,,,,,
+"Woods Richardson, Simeon",MIN,2025,1878,45.6,27.2,4.3,13,,,10,,,,
+"Woods Richardson, Simeon",MIN,2024,2295,40.3,31.2,19.3,9.3,,,,,,,
+"Wrobleski, Justin",LAD,2025,1092,28.6,24.8,3.3,8.6,20.6,14.1,,,,,
+"Yamamoto, Yoshinobu",LAD,2025,2789,35.2,2.8,,17.6,7.8,11.1,25.5,,0,,
+"Yamamoto, Yoshinobu",LAD,2024,1469,40.5,3.2,,23.1,2.8,6.1,24.2,,0.1,,
+"Yarbrough, Ryan",NYY,2025,1017,13.9,,20.6,,20.4,25.9,,,19.4,,
+"Yarbrough, Ryan",NYY,2024,1514,17.6,,15.5,,29.6,9.9,,,27.1,0.3,
+"Yarbrough, Ryan",NYY,2023,1424,30.4,,18.2,,0.6,24.8,,,26.1,,
+"Yates, Kirby",LAA,2024,1027,60.7,0.6,,,,,38.7,,,,
+"Yates, Kirby",LAA,2023,1058,53.9,0.2,,,,,44.6,,1.3,,
+"Young, Alex",Free Agent,2023,877,3.5,,35.9,24.3,36.3,,,,,,
+"Young, Brandon",BAL,2025,940,43.8,8.9,4.6,15.8,,9.2,17.8,,,,
+"Zeferjahn, Ryan",LAA,2025,1029,31.5,16.8,,,0.6,21.9,,,26.8,2.4,
+"Zerpa, Angel",MIL,2025,1099,20.4,31.9,3.6,,44,,,,,,
+"Zerpa, Angel",MIL,2024,951,19.7,26.1,10.3,0.2,43.7,,,,,,</script>
+    <script>
+        let allData = [];
+        let filteredData = [];
+        let currentSort = { column: 'player', direction: 'asc' };
+
+        function parseCSV(csv) {
+            const lines = csv.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i];
+                const values = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(current);
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                values.push(current);
+                
+                // Ensure we have the right number of columns
+                while (values.length < headers.length) {
+                    values.push('');
+                }
+                
+                const obj = {};
+                headers.forEach((header, index) => {
+                    let val = values[index] ? values[index].trim() : '';
+                    // Remove quotes if present
+                    if (val.startsWith('"') && val.endsWith('"')) {
+                        val = val.slice(1, -1);
+                    }
+                    obj[header] = val;
+                });
+                data.push(obj);
+            }
+            
+            return data;
+        }
+
+        function initializeData() {
+            const csvContent = document.querySelector('script#csvData').textContent.trim();
+            allData = parseCSV(csvContent);
+            filteredData = [...allData];
+            
+            // Populate team filter
+            const teams = [...new Set(allData.map(d => d.Team))].sort();
+            const teamFilter = document.getElementById('teamFilter');
+            teams.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team;
+                option.textContent = team;
+                teamFilter.appendChild(option);
+            });
+            
+            updateStats();
+            renderTable();
+            
+            // Add event listeners
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+            document.getElementById('teamFilter').addEventListener('change', applyFilters);
+        }
+
+        function updateStats() {
+            const stats = {
+                total: filteredData.length,
+                teams: new Set(filteredData.map(d => d.Team)).size,
+                avgFastball: (filteredData.reduce((sum, d) => sum + (parseFloat(d.FB) || 0), 0) / filteredData.filter(d => d.FB).length).toFixed(1)
+            };
+            
+            document.getElementById('statsContainer').innerHTML = `
+                <div class="stat-card">
+                    <div class="number">${stats.total}</div>
+                    <div class="label">Pitcher Records</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${stats.teams}</div>
+                    <div class="label">Teams</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${stats.avgFastball}%</div>
+                    <div class="label">Avg FB Mix</div>
+                </div>
+            `;
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const teamFilter = document.getElementById('teamFilter').value;
+            
+            filteredData = allData.filter(row => {
+                const playerMatch = row['Player Name'].toLowerCase().includes(searchTerm);
+                const teamMatch = !teamFilter || row.Team === teamFilter;
+                return playerMatch && teamMatch;
+            });
+            
+            updateStats();
+            renderTable();
+        }
+
+        function sortTable(column) {
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+            
+            filteredData.sort((a, b) => {
+                let aVal = column === 'player' ? a['Player Name'] : a[column];
+                let bVal = column === 'player' ? b['Player Name'] : b[column];
+                
+                if (!isNaN(aVal) && !isNaN(bVal) && aVal !== '' && bVal !== '') {
+                    aVal = parseFloat(aVal);
+                    bVal = parseFloat(bVal);
+                }
+                
+                if (currentSort.direction === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="15" class="no-data">No pitchers found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filteredData.map(row => {
+                const teamClass = row.Team === 'Free Agent' ? 'free-agent' : '';
+                return `
+                    <tr>
+                        <td>${row['Player Name']}</td>
+                        <td><span class="team ${teamClass}">${row.Team}</span></td>
+                        <td class="number">${row.year}</td>
+                        <td class="number">${row.pitch_count}</td>
+                        <td class="number">${row.FB || '-'}</td>
+                        <td class="number">${row.SL || '-'}</td>
+                        <td class="number">${row.CH || '-'}</td>
+                        <td class="number">${row.CB || '-'}</td>
+                        <td class="number">${row.SNK || '-'}</td>
+                        <td class="number">${row.CUT || '-'}</td>
+                        <td class="number">${row.SPLT || '-'}</td>
+                        <td class="number">${row.KN || '-'}</td>
+                        <td class="number">${row.SWP || '-'}</td>
+                        <td class="number">${row.SLV || '-'}</td>
+                        <td class="number">${row.FRK || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('teamFilter').value = '';
+            applyFilters();
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', initializeData);
+    </script>
+</body>
+</html>
