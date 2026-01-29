@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLB Pitcher Statistics 2023-2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin: 0;
+            text-align: center;
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            background: #f0f0f0;
+            padding: 5px;
+            border-radius: 8px;
+        }
+        
+        .toggle-btn {
+            padding: 10px 20px;
+            border: none;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .toggle-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .info {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .team-filter {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .team-filter:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #764ba2;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .stat-card .label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 13px;
+        }
+        
+        thead {
+            background: #f5f5f5;
+            border-top: 2px solid #667eea;
+            border-bottom: 2px solid #667eea;
+            position: sticky;
+            top: 0;
+        }
+        
+        th {
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        
+        th:hover {
+            background: #e8e8e8;
+        }
+        
+        th.sortable::after {
+            content: ' ⇅';
+            opacity: 0.5;
+        }
+        
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .team {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .team.free-agent {
+            background: #999;
+        }
+        
+        .number {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 800px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <h1>⚾ MLB Pitcher Statistics</h1>
+            <div class="view-toggle">
+                <button class="toggle-btn active" onclick="switchView('velocity')">Pitch Velocity</button>
+                <button class="toggle-btn" onclick="switchView('mix')">Pitch Mix %</button>
+            </div>
+        </div>
+        
+        <div class="info" id="infoText">2023-2025 Pitch Velocity Data • All Years Included</div>
+        
+        <div class="stats" id="statsContainer"></div>
+        
+        <div class="controls">
+            <input type="text" class="search-box" id="searchInput" placeholder="Search by player name...">
+            <select class="team-filter" id="teamFilter">
+                <option value="">All Teams</option>
+            </select>
+            <button class="btn" onclick="resetFilters()">Reset</button>
+        </div>
+        
+        <div class="table-wrapper">
+            <table id="dataTable">
+                <thead id="tableHead">
+                    <tr id="headerRow">
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            Data sourced from Baseball Savant (2023-2025) • Updated January 29, 2026
+        </div>
+    </div>
+
+    <script type="text/csv" id="velocityData">Player Name,Team,year,pitch_count,FB,SL,CH,CB,SNK,CUT,SPLT,KN,SWP,SLV,FRK
+"Abbott, Andrew",CIN,2025,2677,92.8,,84.8,81,,88.6,,,82.8,,
+"Abbott, Andrew",CIN,2024,2333,92.8,85.1,84.8,80.8,,,,,82.9,,
+"Abbott, Andrew",CIN,2023,1897,92.7,,86.6,80.9,92.5,,,,82.9,,
+"Abreu, Albert",Free Agent,2023,1044,96.8,87.7,88.3,,97.4,,,,,,
+"Abreu, Bryan",HOU,2025,1189,97.3,86.5,91.2,,96,,,,,,
+"Abreu, Bryan",HOU,2024,1300,96.7,86.2,90,,96.4,,,,,,
+"Abreu, Bryan",HOU,2023,1211,97.6,87.4,,81.1,97,,,,,,</script>
+
+    <script type="text/csv" id="mixData">Player Name,Team,year,pitch_count,FB,SL,CH,CB,SNK,CUT,SPLT,KN,SWP,SLV,FRK
+"Abbott, Andrew",CIN,2025,2677,47.2,,19.6,15.1,,4.3,,,13.8,,
+"Abbott, Andrew",CIN,2024,2333,53.5,0.2,16.3,11.6,,,,,18.3,,
+"Abbott, Andrew",CIN,2023,1897,49.8,,16.4,17.1,0.2,,,,16.5,,
+"Abreu, Albert",Free Agent,2023,1044,5.9,28.1,14.4,,51.6,,,,,,
+"Abreu, Bryan",HOU,2025,1189,50,48.4,0.4,,1.2,,,,,,
+"Abreu, Bryan",HOU,2024,1300,46.3,53.1,0.5,,0.1,,,,,,
+"Abreu, Bryan",HOU,2023,1211,41,58.7,,0.1,0.2,,,,,,</script>
+
+    <script>
+        let allData = [];
+        let filteredData = [];
+        let currentSort = { column: 'player', direction: 'asc' };
+        let currentView = 'velocity'; // 'velocity' or 'mix'
+
+        const velocityHeaders = ['Player Name', 'Team', 'Year', 'Pitch Count', 'FB (mph)', 'SL (mph)', 'CH (mph)', 'CB (mph)', 'SNK (mph)', 'CUT (mph)', 'SPLT (mph)', 'KN (mph)', 'SWP (mph)', 'SLV (mph)', 'FRK (mph)'];
+        const mixHeaders = ['Player Name', 'Team', 'Year', 'Pitch Count', 'FB %', 'SL %', 'CH %', 'CB %', 'SNK %', 'CUT %', 'SPLT %', 'KN %', 'SWP %', 'SLV %', 'FRK %'];
+
+        function parseCSV(csv) {
+            const lines = csv.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i];
+                const values = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(current);
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                values.push(current);
+                
+                while (values.length < headers.length) {
+                    values.push('');
+                }
+                
+                const obj = {};
+                headers.forEach((header, index) => {
+                    let val = values[index] ? values[index].trim() : '';
+                    if (val.startsWith('"') && val.endsWith('"')) {
+                        val = val.slice(1, -1);
+                    }
+                    obj[header] = val;
+                });
+                data.push(obj);
+            }
+            
+            return data;
+        }
+
+        function switchView(view) {
+            currentView = view;
+            
+            // Update button states
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update info text
+            const infoText = view === 'velocity' 
+                ? '2023-2025 Pitch Velocity Data • All Years Included'
+                : '2023-2025 Pitch Mix Percentages • All Years Included';
+            document.getElementById('infoText').textContent = infoText;
+            
+            // Reload data
+            loadData();
+            updateStats();
+            renderTable();
+        }
+
+        function loadData() {
+            const csvContent = currentView === 'velocity' 
+                ? document.querySelector('script#velocityData').textContent.trim()
+                : document.querySelector('script#mixData').textContent.trim();
+            
+            allData = parseCSV(csvContent);
+            filteredData = [...allData];
+        }
+
+        function initializeData() {
+            loadData();
+            
+            // Populate team filter
+            const teams = [...new Set(allData.map(d => d.Team))].sort();
+            const teamFilter = document.getElementById('teamFilter');
+            teams.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team;
+                option.textContent = team;
+                teamFilter.appendChild(option);
+            });
+            
+            updateHeaders();
+            updateStats();
+            renderTable();
+            
+            // Add event listeners
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+            document.getElementById('teamFilter').addEventListener('change', applyFilters);
+        }
+
+        function updateHeaders() {
+            const headers = currentView === 'velocity' ? velocityHeaders : mixHeaders;
+            const headerRow = document.getElementById('headerRow');
+            headerRow.innerHTML = headers.map((header, index) => {
+                const columnKey = ['Player Name', 'Team', 'year', 'pitch_count', 'FB', 'SL', 'CH', 'CB', 'SNK', 'CUT', 'SPLT', 'KN', 'SWP', 'SLV', 'FRK'][index];
+                const sortColumn = columnKey === 'Player Name' ? 'player' : columnKey;
+                return `<th class="sortable" onclick="sortTable('${sortColumn}')">${header}</th>`;
+            }).join('');
+        }
+
+        function updateStats() {
+            const fbKey = 'FB';
+            const stats = {
+                total: filteredData.length,
+                teams: new Set(filteredData.map(d => d.Team)).size,
+                avgValue: (filteredData.reduce((sum, d) => sum + (parseFloat(d[fbKey]) || 0), 0) / filteredData.filter(d => d[fbKey]).length).toFixed(1)
+            };
+            
+            const label = currentView === 'velocity' ? 'Avg Fastball (mph)' : 'Avg FB Mix (%)';
+            
+            document.getElementById('statsContainer').innerHTML = `
+                <div class="stat-card">
+                    <div class="number">${stats.total}</div>
+                    <div class="label">Pitcher Records</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${stats.teams}</div>
+                    <div class="label">Teams</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${stats.avgValue}${currentView === 'velocity' ? ' mph' : '%'}</div>
+                    <div class="label">${label}</div>
+                </div>
+            `;
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const teamFilter = document.getElementById('teamFilter').value;
+            
+            filteredData = allData.filter(row => {
+                const playerMatch = row['Player Name'].toLowerCase().includes(searchTerm);
+                const teamMatch = !teamFilter || row.Team === teamFilter;
+                return playerMatch && teamMatch;
+            });
+            
+            updateStats();
+            renderTable();
+        }
+
+        function sortTable(column) {
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+            
+            filteredData.sort((a, b) => {
+                let aVal = column === 'player' ? a['Player Name'] : a[column];
+                let bVal = column === 'player' ? b['Player Name'] : b[column];
+                
+                if (!isNaN(aVal) && !isNaN(bVal) && aVal !== '' && bVal !== '') {
+                    aVal = parseFloat(aVal);
+                    bVal = parseFloat(bVal);
+                }
+                
+                if (currentSort.direction === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="15" class="no-data">No pitchers found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filteredData.map(row => {
+                const teamClass = row.Team === 'Free Agent' ? 'free-agent' : '';
+                const pitchTypes = ['FB', 'SL', 'CH', 'CB', 'SNK', 'CUT', 'SPLT', 'KN', 'SWP', 'SLV', 'FRK'];
+                
+                return `
+                    <tr>
+                        <td>${row['Player Name']}</td>
+                        <td><span class="team ${teamClass}">${row.Team}</span></td>
+                        <td class="number">${row.year}</td>
+                        <td class="number">${row.pitch_count}</td>
+                        ${pitchTypes.map(type => `<td class="number">${row[type] || '-'}</td>`).join('')}
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('teamFilter').value = '';
+            applyFilters();
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', initializeData);
+    </script>
+</body>
+</html>
